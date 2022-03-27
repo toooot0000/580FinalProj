@@ -10,6 +10,7 @@
 #include "string"
 #include "sstream"
 #include "initializer_list"
+#include <numbers>
 
 
 template<typename T, size_t M, size_t N> requires (M > 0 && N > 0)
@@ -53,7 +54,7 @@ public:
      * @param vec
      * @return
      */
-    Vec<T, M> rightMulti(Vec<T, N> vec);
+    Vec<T, M> rightMulti(const Vec<T, N> &vec) const;
 
     [[nodiscard]] std::string toString() const;
 
@@ -68,17 +69,17 @@ public:
      * @param vec
      * @return
      */
-    Vec<T, N> leftMulti(Vec<T, M> vec) const;
+    Vec<T, N> leftMulti(const Vec<T, M> &vec) const;
 
 
     template<size_t K>
     requires (K > 0)
-    Mat<T, M, K> rightMulti(Mat<T, N, K> matB) const;
+    Mat<T, M, K> rightMulti(const Mat<T, N, K> &matB) const;
 
 
     template<size_t K>
     requires (K > 0)
-    Mat<T, K, N> leftMulti(Mat<T, K, M> matB) const;
+    Mat<T, K, N> leftMulti(const Mat<T, K, M> &matB) const;
 
     Mat<T, N, M> transposed() const;
 
@@ -88,7 +89,7 @@ public:
 
     Mat<T, M - 1, N - 1> remainMat(size_t i, size_t j) const;
 
-    [[nodiscard]] double determinant() const;
+    [[nodiscard]] float determinant() const;
 
     /**
      * Return the card of the matrix
@@ -104,7 +105,7 @@ public:
         return mat1.rightMulti(mat2);
     };
 
-    friend Vec<T, M> operator*(Mat<T, M, N> mat1, Vec<T, N> vec)
+    friend Vec<T, M> operator*(const Mat<T, M, N> &mat1, const Vec<T, N> &vec)
     {
         return mat1.rightMulti(vec);
     };
@@ -112,6 +113,7 @@ public:
     Mat &operator=(const Mat &other);
 
     Mat &operator=(Mat &&other) noexcept;
+
 
 };
 
@@ -131,14 +133,14 @@ public:
 
     Mat(std::initializer_list<T> initList) : value(*(initList.begin())) {}
 
-    double determinant() const
+    float determinant() const
     {
         return value;
     }
 };
 
-typedef Mat<double, 3, 3> Mat3;
-typedef Mat<double, 4, 4> Mat4;
+typedef Mat<float, 3, 3> Mat3;
+typedef Mat<float, 4, 4> Mat4;
 
 
 template<typename T, size_t M, size_t N>
@@ -228,7 +230,7 @@ Mat<T, M, N>::Mat(std::initializer_list<T> initList)
  */
 template<typename T, size_t M, size_t N>
 requires (M > 0 && N > 0)
-Vec<T, M> Mat<T, M, N>::rightMulti(Vec<T, N> vec)
+Vec<T, M> Mat<T, M, N>::rightMulti(const Vec<T, N>& vec) const
 {
     Vec<T, M> ret;
 
@@ -263,14 +265,6 @@ requires (M > 0 && N > 0)
     return ss.str();
 }
 
-//template<typename T, size_t M, size_t N>
-//requires (M > 0 && N > 0)
-//std::ostream &operator<<(std::ostream &os, const Mat<T, M, N> &matPrinted)
-//{
-//    os << matPrinted.toString();
-//    return os;
-//}
-
 /**
  * Vec * Mat
  * @param vec
@@ -279,7 +273,7 @@ requires (M > 0 && N > 0)
 
 template<typename T, size_t M, size_t N>
 requires (M > 0 && N > 0)
-Vec<T, N> Mat<T, M, N>::leftMulti(Vec<T, M> vec) const
+Vec<T, N> Mat<T, M, N>::leftMulti(const Vec<T, M> &vec) const
 {
     Vec<T, N> ret;
 
@@ -298,7 +292,7 @@ template<typename T, size_t M, size_t N> requires (M > 0 && N > 0)
 
 template<size_t K>
 requires (K > 0)
-Mat<T, M, K> Mat<T, M, N>::rightMulti(Mat<T, N, K> matB) const
+Mat<T, M, K> Mat<T, M, N>::rightMulti(const Mat<T, N, K> &matB) const
 {
     Mat<T, M, K> ret;
     for (size_t i = 0; i != M; ++i)
@@ -319,7 +313,7 @@ template<typename T, size_t M, size_t N> requires (M > 0 && N > 0)
 
 template<size_t K>
 requires (K > 0)
-Mat<T, K, N> Mat<T, M, N>::leftMulti(Mat<T, K, M> matB) const
+Mat<T, K, N> Mat<T, M, N>::leftMulti(const Mat<T, K, M> &matB) const
 {
     Mat<T, K, M> ret;
     for (size_t i = 0; i != K; ++i)
@@ -428,13 +422,13 @@ noexcept
 
 template<typename T, size_t M, size_t N>
 requires (M > 0 && N > 0)
-double Mat<T, M, N>::determinant() const
+float Mat<T, M, N>::determinant() const
 {
     static_assert(M == N, "Only square matrices have determinant!");
 #if M == 2
     return mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 #else
-    double res = 0;
+    float res = 0;
     for (size_t i = 0; i != M; ++i)
     {
         res += (i & 1 ? -1 : 1) * mat[0][i] * remainMat(0, i).determinant();
@@ -445,7 +439,7 @@ double Mat<T, M, N>::determinant() const
 
 
 /**
- * 
+ *
  * Return the card of the matrix
  * @return
  */
@@ -457,41 +451,110 @@ size_t card() { return 0; };
 
 static inline Mat4 makeViewportTrans(int nx, int ny)
 {
-    auto _nx = static_cast<double>(nx), _ny = static_cast<double>(ny);
-    return Mat4({_nx / 2.0, 0, 0, (_nx - 1) / 2.0,
-                 0, _ny / 2.0, 0, (_ny - 1) / 2.0,
-                 0, 0, 1, 0,
-                 0, 0, 0, 1});
+    auto _nx = static_cast<float>(nx), _ny = static_cast<float>(ny);
+    return Mat4({
+            _nx / 2.0f, 0, 0, (_nx) / 2.0f,
+            0, _ny / 2.0f, 0, (_ny) / 2.0f,
+            0, 0, 1, 0,
+            0, 0, 0, 1});
 }
 
-static inline Mat4 makeOrthographicProjectTrans(double l, double b, double n, double r, double t, double f)
+static inline Mat4 makeOrthographicProjectTrans(float l, float b, float n, float r, float t, float f)
 {
     assert(r != l && t != b && f < n);
-    return Mat4({2.0 / (r - l), 0, 0, -(r + l) / (r - l), 0, 2.0 / (t - b), 0, -(t + b) / (t - b), 0, 0, 2.0 / (n - f),
+    return Mat4({2.0f / (r - l), 0, 0,
+                 -(r + l) / (r - l), 0, 2.0f / (t - b), 0,
+                 -(t + b) / (t - b), 0, 0, 2.0f / (n - f),
                  -(n + f) / (n - f), 0, 0, 0, 1});
 }
 
-static inline Mat4 makePerspectiveProjectTrans(double l, double b, double n, double r, double t, double f)
+static inline Mat4 makePerspectiveProjectTrans(float l = -1, float b = -1, float n = -15, float r=1, float t=1, float f=-(float)INT_MAX)
 {
-    assert(r != l && t != b && f < n && n < 0);
     return Mat4({
-                        2.0 * n / (r - l), 0, (r + l) / (l - r), 0,
-                        0, 2.0 * n / (t - b), (t + b) / (b - t), 0,
-                        0, 0, (n + f) / (n - f), 2.0 * n * f / (f - n),
+                        2.0f * n / (r - l), 0, (r + l) / (l - r), 0,
+                        0, 2.0f * n / (t - b), (t + b) / (b - t), 0,
+                          0, 0, (n + f) / (n - f), 2.0f * n * f / (f - n),
                         0, 0, 1, 0});
 }
 
 
 static inline Mat4 makeCameraTrans(const Vec3 &eye, const Vec3 &gaze, const Vec3 &t)
 {
-    assert(t.length() != 0 && gaze.dot(t) == 0);
+//    assert(t.length() != 0 && gaze.dot(t) == 0);
     Vec3 u, v, w;
     w = gaze.normalized().negative();
     u = w.cross(t).normalized();
-    v = w.cross(u);
-    return Mat4(
-            {u.getX(), u.getY(), u.getZ(), -u.dot(eye), v.getX(), v.getY(), v.getZ(), -v.dot(eye), w.getX(), w.getY(),
-             w.getZ(), -w.dot(eye), 0, 0, 0, 1});
+    v = w.cross(u).normalized();
+    return Mat4({
+                u.getX(), u.getY(), u.getZ(), -u.dot(eye),
+                v.getX(), v.getY(), v.getZ(), -v.dot(eye),
+                w.getX(), w.getY(), w.getZ(), -w.dot(eye),
+                0, 0, 0, 1});
 }
+
+static inline Mat4 makeTranslateTrans(float x, float y, float z)
+{
+    return Mat4({
+        1, 0, 0, x,
+        0, 1, 0, y,
+        0, 0, 1, z,
+        0, 0, 0, 1
+    });
+}
+
+static inline Mat4 makeScaleTrans(float k){
+    return Mat4({
+        k, 0, 0, 0,
+        0, k, 0, 0,
+        0, 0, k, 0,
+        0, 0, 0, 1
+    });
+}
+
+static inline Mat4 makeXRotationTrans(float deg){
+    using namespace std;
+    float rad = deg/180.f * std::numbers::pi_v<float>;
+    return {
+        1, 0, 0, 0,
+        0, cos(rad), -sin(rad), 0,
+        0, sin(rad), cos(rad), 0,
+        0, 0, 0, 1
+    };
+}
+
+static inline Mat4 makeYRotationTrans(float deg){
+    using namespace std;
+    float rad = deg/180.f * std::numbers::pi_v<float>;
+    return {
+            cos(rad), 0, sin(rad), 0,
+            0, 1, 0, 0,
+            -sin(rad), 0, cos(rad), 0,
+            0, 0, 0, 1
+    };
+}
+
+
+static inline Mat4 makeZRotationTrans(float deg){
+    using namespace std;
+    float rad = deg/180.f * std::numbers::pi_v<float>;
+    return {
+            cos(rad), -sin(rad), 0, 0,
+            sin(rad), cos(rad), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+    };
+}
+
+static inline Mat4 makeNormTrans(const Mat4 &ori){
+    const auto &row = ori[0];
+    float k = std::sqrt(row[0]*row[0] + row[1]*row[1] + row[2]*row[2]);
+    return {
+        ori[0][0]/k, ori[0][1]/k, ori[0][2]/k, 0,
+        ori[1][0]/k, ori[1][1]/k, ori[1][2]/k, 0,
+        ori[2][0]/k, ori[2][1]/k, ori[2][2]/k, 0,
+        0, 0, 0, 1
+    };
+}
+
 
 #endif //CG_MAT_H

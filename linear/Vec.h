@@ -71,13 +71,13 @@ public:
      * getLength
      * @return
      */
-    [[nodiscard]] double length() const;
+    [[nodiscard]] float length() const;
 
     /**
      * get normalized
      * @return
      */
-    [[nodiscard]] Vec<double, N> normalized() const;
+    [[nodiscard]] Vec<float, N> normalized() const;
 
     /*
      * get negative();
@@ -92,10 +92,15 @@ public:
     void translate(const Vec<T, N> &offset);
 
     template<typename U>
-    void multiple(U k);
+    void scale(U k);
 
     template<typename U>
-    Vec<T, N> multipled(U k) const;
+    Vec<T, N> scaled(U k) const;
+
+    Vec<T, N> scaled(const Vec<T, N> &coef) const;
+
+    void scale(const Vec<T, N> &coef);
+
 
     virtual Vec<T, N> cross(const Vec<T, N> &other) const;
 
@@ -117,7 +122,15 @@ public:
     template<typename U>
     friend inline Vec operator*(U k, const Vec<T, N> &other)
     {
-        return other.multipled(k);
+        return other.scaled(k);
+    }
+
+    friend inline Vec operator*(const Vec<T, N> &v1, const Vec<T, N> &v2){
+        Vec<T, N> ret;
+        for(int i = 0; i<N; i++){
+            ret[i] = v1[i] * v2[i];
+        }
+        return ret;
     }
 
 
@@ -160,6 +173,24 @@ public:
     {
         assert(N > 2);
         return arr[2];
+    }
+
+    inline T getW() const{
+        assert(N > 3);
+        return arr[3];
+    }
+
+    inline void homogenize(){
+        for(int i = 0; i<N-1; ++i){
+            arr[i] /= arr[N-1];
+        }
+    }
+
+    inline void normalize(){
+        auto l = length();
+        for(int i = 0; i<N; ++i){
+            arr[i]/=l;
+        }
     }
 
 };
@@ -271,9 +302,9 @@ Vec<T, N> Vec<T, N>::plus(const Vec<T, N> &other) const
  */
 template<typename T, size_t N>
 requires (N > 0)
-double Vec<T, N>::length() const
+float Vec<T, N>::length() const
 {
-    double ret = 0;
+    float ret = 0;
     for (auto &i: arr)
     {
         ret += std::pow(i, 2);
@@ -287,15 +318,15 @@ double Vec<T, N>::length() const
  */
 template<typename T, size_t N>
 requires (N > 0)
-[[nodiscard]] Vec<double, N> Vec<T, N>::normalized() const
+[[nodiscard]] Vec<float, N> Vec<T, N>::normalized() const
 {
-    double len = length();
+    float len = length();
     std::array<T, N> newArr;
     for (size_t i = 0; i < N; ++i)
     {
         newArr[i] = arr[i] / len;
     }
-    return Vec<double, N>(newArr);
+    return Vec<float, N>(newArr);
 }
 
 /*
@@ -331,7 +362,7 @@ void Vec<T, N>::translate(const Vec<T, N> &offset)
 template<typename T, size_t N> requires (N > 0)
 
 template<typename U>
-void Vec<T, N>::multiple(U k)
+void Vec<T, N>::scale(U k)
 {
     for (auto &i: arr)
     {
@@ -347,7 +378,7 @@ const
     assert(N == 3);
     T a1 = arr[0], a2 = arr[1], a3 = arr[2];
     T b1 = other[0], b2 = other[1], b3 = other[2];
-    return Vec{a2 * b3 - a3 * b2, a3 * b1 - a1 * b3, a1 * b2 - a2 * b1};
+    return Vec({a2 * b3 - a3 * b2, a3 * b1 - a1 * b3, a1 * b2 - a2 * b1});
 };
 
 /**
@@ -399,10 +430,30 @@ T Vec<T, N>::operator[](size_t ind) const
     return arr[ind];
 }
 
-template<typename T, size_t N> requires (N > 0)
+template<typename T, size_t N>
+requires (N>0)
+Vec<T, N> Vec<T, N>::scaled(const Vec<T, N>& other) const
+{
+    Vec<T, N> ret;
+    for(int i = 0; i<N; i++){
+        ret[i] = arr[i] * other[i];
+    }
+    return ret;
+}
 
+template<typename T, size_t N>
+requires(N>0)
+void Vec<T, N>::scale(const Vec<T, N> &other)
+{
+    for (int i = 0; i < N; ++i){
+        arr[i] *= other[i];
+    }
+}
+
+
+template<typename T, size_t N> requires (N > 0)
 template<typename U>
-Vec<T, N> Vec<T, N>::multipled(U k) const
+Vec<T, N> Vec<T, N>::scaled(U k) const
 {
     Vec<T, N> ret(arr);
     for (int i = 0; i < N; ++i)
@@ -453,7 +504,7 @@ Vec<T, N>::Vec(const Vec<T, M> &other, Ts...rest)
 
 
 template<size_t N>
-static Vec<int, N> round(const Vec<double, N> &vec)
+static Vec<int, N> round(const Vec<float, N> &vec)
 {
     Vec<int, N> ret;
     for (int i = 0; i < N; i++)
@@ -464,8 +515,19 @@ static Vec<int, N> round(const Vec<double, N> &vec)
 }
 
 typedef Vec<int, 2> iVec2;
-typedef Vec<double, 3> Vec3;
+typedef Vec<float, 3> Vec3;
 typedef Vec<int, 3> iVec3;
-typedef Vec<double, 4> Vec4;
+typedef Vec<float, 4> Vec4;
+
+
+
+template<typename T, size_t N>
+static inline Vec<T, N> clamp(const Vec<T, N> &v, const Vec<T, N> &l, const Vec<T, N> &h){
+    Vec<T, N> ret;
+    for(int i = 0; i<N; i++){
+        ret[i] = (v[i]<l[i]? l[i]: (v[i]>h[i]? h[i]:v[i]));
+    }
+    return ret;
+}
 
 #endif //CG_VEC_H

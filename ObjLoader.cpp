@@ -2,4 +2,88 @@
 // Created by Jerry Ye on 2022/3/24.
 //
 
+#include "./renderer/Mesh.h"
 #include "ObjLoader.h"
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <tuple>
+
+using namespace std;
+
+Mesh ObjLoader::load(const char *filename)
+{
+    ifstream obj(filename);
+    string line, op;
+    vector<Vec3> vs, uvs, norms;
+    vector<Tri> tris;
+
+    while(getline(obj, line)){
+        if(line[0] == '#'){
+            continue;
+        }
+        stringstream ss(line);
+        ss >> op;
+        switch (op[0])
+        {
+            case 'v':{
+                if(op.length() == 1){
+                    float x, y, z;
+                    ss >> x >> y >> z;
+                    vs.emplace_back(x, y, z);
+                } else switch(op[1]){
+                        case 't':   // vt
+                            float u, v;
+                            ss >> u >> v;
+                            uvs.emplace_back(u, v, 1.f);
+                            break;
+                        case 'n':   // vn
+                            float x, y, z;
+                            ss >> x >> y >> z;
+                            norms.emplace_back(x, y, z);
+                            break;
+                        default:
+                            break;
+                    }
+                break;
+            }
+            case 'f':{
+                string face, token;
+                vector<vector<int>> nums;
+                int groupsNum = 0;
+                while(ss>>face){
+                    stringstream faceSs(face);
+                    nums.emplace_back(vector<int>());
+                    while(getline(faceSs, token, '/')){
+                        nums[groupsNum].emplace_back(stoi(token));
+                    }
+                    groupsNum++;
+                }
+                if(nums.size() == 3){
+                    Tri tri{
+                            {nums[0][0], nums[1][0], nums[2][0]},
+                            {nums[0][1], nums[1][1], nums[2][1]},
+                            {nums[0][2], nums[1][2], nums[2][2]}
+                    };
+                    tris.emplace_back(tri);
+                } else if(nums.size() == 4) {
+                    Tri tri1{
+                            {nums[0][0], nums[1][0], nums[2][0]},
+                            {nums[0][1], nums[1][1], nums[2][1]},
+                            {nums[0][2], nums[1][2], nums[2][2]}
+                    }, tri2{
+                            {nums[0][0], nums[2][0], nums[3][0]},
+                            {nums[0][1], nums[2][1], nums[3][1]},
+                            {nums[0][2], nums[2][2], nums[3][2]}
+                    };
+                    tris.emplace_back(tri1);
+                    tris.emplace_back(tri2);
+                }
+                break;
+            }
+            default: { break; }
+        }
+    }
+    return {vs, uvs, norms, tris};
+}
