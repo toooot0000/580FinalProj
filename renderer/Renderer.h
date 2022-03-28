@@ -24,11 +24,14 @@ struct Light{
 
 struct Pixel{
     Util::Color color;
-    float z{INT_MAX};
+    float z{-2};
 };
 
 class Mesh;
 
+typedef Pixel* PixelBuffer;
+
+//template<size_t AA_SIZE = 1>
 class Renderer
 {
 private:
@@ -39,18 +42,25 @@ private:
     };
     std::vector<Light> lights;
     Light ambientLight{Vec3{0, 0, 0}, Util::Color({.3, .3, .3})};
-    Pixel* pixelBuffer;
+    PixelBuffer pixelBuffer;
+    PixelBuffer tempBuffer;
     int xRes, yRes;
+    std::vector<std::tuple<float, float, float>> aaSetting{std::tuple{0, 0, 1}};
 
-    void rasterize(const Mesh& mesh, Vec4 v[3], Vec4 norm[3], Vec3 uvs[3]);
-    static void sortVertices(Vec4 v[3], Vec4 norm[3], Vec3 uvs[3]);
+
+    void rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
+                   PixelBuffer buffer, float xOff, float yOff);
+    static void sortVertices(std::array<Vec4, 3> &v, std::array<Vec4, 3> &n, std::array<Vec3, 3> &uvs);
     Util::Color computeColor(const Mesh& mesh, const Vec3& norm, float u, float v);
 
-    void putPixel(int row, int col, Pixel&& p);
+    void putPixel(PixelBuffer buffer, int row, int col, Pixel&& p) const;
+
+    void clearBuffer(PixelBuffer buffer) const;
 
 public:
     Renderer() = delete;
     Renderer(int xRes, int yRes);
+    Renderer(int xRes, int yRes, std::vector<std::tuple<float, float, float>> aaSetting);
     ~Renderer();
     void render(const Mesh& mesh);
     void flushToImg(const char* name);

@@ -459,6 +459,16 @@ static inline Mat4 makeViewportTrans(int nx, int ny)
             0, 0, 0, 1});
 }
 
+static inline Mat4 makeViewportTrans(int nx, int ny, float depth)
+{
+    auto _nx = static_cast<float>(nx), _ny = static_cast<float>(ny);
+    return Mat4({
+                        _nx / 2.0f, 0, 0, (_nx) / 2.0f,
+                        0, _ny / 2.0f, 0, (_ny) / 2.0f,
+                        0, 0, depth, 0,
+                        0, 0, 0, 1});
+}
+
 static inline Mat4 makeOrthographicProjectTrans(float l, float b, float n, float r, float t, float f)
 {
     assert(r != l && t != b && f < n);
@@ -468,13 +478,24 @@ static inline Mat4 makeOrthographicProjectTrans(float l, float b, float n, float
                  -(n + f) / (n - f), 0, 0, 0, 1});
 }
 
-static inline Mat4 makePerspectiveProjectTrans(float l = -1, float b = -1, float n = -15, float r=1, float t=1, float f=-(float)INT_MAX)
+static inline Mat4 makePerspectiveProjectTrans(float l = -1, float b = -1, float n = -1.5, float r=1, float t=1, float f=-10000)
 {
     return Mat4({
                         2.0f * n / (r - l), 0, (r + l) / (l - r), 0,
                         0, 2.0f * n / (t - b), (t + b) / (b - t), 0,
                           0, 0, (n + f) / (n - f), 2.0f * n * f / (f - n),
                         0, 0, 1, 0});
+}
+
+static inline Mat4 makePerspectiveProjectTransV2(float fov)
+{
+    fov = std::tan(fov/180.f * std::numbers::pi_v<float>/2);
+    return Mat4({
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, fov, 0,
+        0, 0, fov, 0
+    });
 }
 
 
