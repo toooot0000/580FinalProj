@@ -8,8 +8,19 @@ add_subdirectory(./linear)
 add_subdirectory(./tgaimage)
 add_subdirectory(./renderer)
 
+add_subdirectory(./lib/lodepng-master)
+
+
 add_executable(580_Final_Proj main.cpp ObjLoader.h ObjLoader.cpp)
-target_link_libraries(580_Final_Proj PRIVATE linear PRIVATE tgaimage PRIVATE renderer PRIVATE util)
+target_include_directories(580_Final_Proj PRIVATE ./lib)
+target_link_libraries(
+        580_Final_Proj
+        PRIVATE linear
+        PRIVATE tgaimage
+        PRIVATE renderer
+        PRIVATE util
+        PUBLIC lodepng
+)
 
 add_custom_target(
         copy-files ALL

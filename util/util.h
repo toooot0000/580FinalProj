@@ -6,6 +6,7 @@
 #define INC_580_FINAL_PROJ_UTIL_H
 #include "../tgaimage/tgaimage.h"
 #include "../linear/Vec.h"
+#include <iostream>
 
 namespace Util
 {
@@ -39,59 +40,76 @@ namespace Util
     class Color : public TGAColor{
         public:
             Color() : TGAColor(){};
+            Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+                :TGAColor(r, g, b, a)
+            {};
             explicit Color(const Vec3& v) : TGAColor(
-                    static_cast<unsigned char>(v.getX()*255),
-                    static_cast<unsigned char>(v.getY()*255),
-                    static_cast<unsigned char>(v.getZ()*255),  1){};
+                    static_cast<unsigned char>(clamp<double>(v.getX(), 0, 1)*255),
+                    static_cast<unsigned char>(clamp<double>(v.getY(), 0, 1)*255),
+                    static_cast<unsigned char>(clamp<double>(v.getZ(), 0, 1)*255),
+                    1){};
+
             [[nodiscard]]inline Vec3 toVec3() const{
-                return {(float)r/255.f, (float)g/255.f, (float)b/255.f};
+                return {(double)r/255., (double)g/255., (double)b/255.};
             };
 
-            inline void scale(float v)
+            inline void scale(double v)
             {
-                r = static_cast<unsigned char>(Util::clamp(static_cast<float>(r)*v, 0.f, 255.f));
-                g = static_cast<unsigned char>(Util::clamp(static_cast<float>(g)*v, 0.f, 255.f));
-                b = static_cast<unsigned char>(Util::clamp(static_cast<float>(b)*v, 0.f, 255.f));
+                r = static_cast<unsigned char>(Util::clamp(static_cast<double>(r)*v, 0., 255.));
+                g = static_cast<unsigned char>(Util::clamp(static_cast<double>(g)*v, 0., 255.));
+                b = static_cast<unsigned char>(Util::clamp(static_cast<double>(b)*v, 0., 255.));
+                a = static_cast<unsigned char>(Util::clamp(static_cast<double>(a)*v, 0., 255.));
             };
             inline void scale(const Vec3& v)
             {
-                r = static_cast<unsigned char>(Util::clamp(static_cast<float>(r)*v.getX(), 0.f, 255.f));
-                g = static_cast<unsigned char>(Util::clamp(static_cast<float>(g)*v.getY(), 0.f, 255.f));
-                b = static_cast<unsigned char>(Util::clamp(static_cast<float>(b)*v.getZ(), 0.f, 255.f));
+                r = static_cast<unsigned char>(Util::clamp(static_cast<double>(r)*v.getX(), 0., 255.));
+                g = static_cast<unsigned char>(Util::clamp(static_cast<double>(g)*v.getY(), 0., 255.));
+                b = static_cast<unsigned char>(Util::clamp(static_cast<double>(b)*v.getZ(), 0., 255.));
+                a = static_cast<unsigned char>(Util::clamp(static_cast<double>(a)*v.getZ(), 0., 255.));
             };
             inline void translate(const Vec3& v){
-                r = static_cast<unsigned char>(Util::clamp(static_cast<float>(r)/255+v.getX(), 0.f, 1.f)*255);
-                g = static_cast<unsigned char>(Util::clamp(static_cast<float>(g)/255+v.getY(), 0.f, 1.f)*255);
-                b = static_cast<unsigned char>(Util::clamp(static_cast<float>(b)/255+v.getZ(), 0.f, 1.f)*255);
+                r = static_cast<unsigned char>(Util::clamp(static_cast<double>(r)/255+v.getX(), 0., 1.)*255);
+                g = static_cast<unsigned char>(Util::clamp(static_cast<double>(g)/255+v.getY(), 0., 1.)*255);
+                b = static_cast<unsigned char>(Util::clamp(static_cast<double>(b)/255+v.getZ(), 0., 1.)*255);
             };
             inline void translate(const Color& v){
                 r += v.r;
                 g += v.g;
                 b += v.b;
+                a += v.a;
                 r = clamp<unsigned char>(r, 0, 255);
                 g = clamp<unsigned char>(g, 0, 255);
                 b = clamp<unsigned char>(b, 0, 255);
+                a = clamp<unsigned char>(a, 0, 255);
             };
+            inline Color interp(const Color& other, double ratio){
+                auto _r = (unsigned char)((double)r*(1-ratio) + (double)other.r),
+                _g = (unsigned char)((double)g*(1-ratio) + (double)other.g),
+                _b = (unsigned char)((double)b*(1-ratio) + (double)other.b),
+                _a = (unsigned char)((double)a*(1-ratio) + (double)other.a)
+                ;
+                return {_r, _g, _b, _a};
+            }
     };
 
     struct D2Line
     {
-        float A{};
-        float B{};
-        float C{};
+        double A{};
+        double B{};
+        double C{};
         D2Line() = default;
 
         template<unsigned long L>
         requires(L >= 2)
-        D2Line(const Vec<float, L>& v0, const Vec<float, L>& v1){
+        D2Line(const Vec<double, L>& v0, const Vec<double, L>& v1){
             this->A = v0[1] - v1[1];
             this->B = v1[0] - v0[0];
             this->C = v0.getX() * v1.getY() - v0.getY() * v1.getX();
         }
 
-        float operator()(const Vec<float, 4>& p) const;
-        float operator()(float x, float y) const;
-        float operator()(int x, int y) const;
+        double operator()(const Vec<double, 4>& p) const;
+        double operator()(double x, double y) const;
+        double operator()(int x, int y) const;
     };
 };
 

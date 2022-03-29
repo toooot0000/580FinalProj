@@ -5,10 +5,12 @@
 #include "./renderer/Mesh.h"
 #include "ObjLoader.h"
 #include <string>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <tuple>
+#include "lodepng-master/lodepng.h"
 
 using namespace std;
 
@@ -29,17 +31,17 @@ Mesh ObjLoader::load(const char *filename)
         {
             case 'v':{
                 if(op.length() == 1){
-                    float x, y, z;
+                    double x, y, z;
                     ss >> x >> y >> z;
                     vs.emplace_back(x, y, z);
                 } else switch(op[1]){
                         case 't':   // vt
-                            float u, v;
+                            double u, v;
                             ss >> u >> v;
                             uvs.emplace_back(u, v, 1.f);
                             break;
                         case 'n':   // vn
-                            float x, y, z;
+                            double x, y, z;
                             ss >> x >> y >> z;
                             norms.emplace_back(x, y, z);
                             break;
@@ -86,4 +88,17 @@ Mesh ObjLoader::load(const char *filename)
         }
     }
     return {vs, uvs, norms, tris};
+}
+
+Texture ObjLoader::loadTexture(const char *filename)
+{
+    std::vector<unsigned char> image;
+    unsigned width, height;
+
+    auto error = lodepng::decode(image, width, height, filename);
+    if(error){
+        std::cerr << "Sth wrong!" << lodepng_error_text(error) << std::endl;
+        return {};
+    }
+    return Texture(width, height, image);
 }

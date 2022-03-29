@@ -20,11 +20,13 @@ struct Camera{
 struct Light{
     Vec3 direction;
     Util::Color color;
+
+    Light(const Vec3& direction, Util::Color color);
 };
 
 struct Pixel{
     Util::Color color;
-    float z{-2};
+    double z{-2};
 };
 
 class Mesh;
@@ -45,13 +47,13 @@ private:
     PixelBuffer pixelBuffer;
     PixelBuffer tempBuffer;
     int xRes, yRes;
-    std::vector<std::tuple<float, float, float>> aaSetting{std::tuple{0, 0, 1}};
+    std::vector<std::tuple<double, double, double>> aaSetting{std::tuple{0, 0, 1}};
 
 
     void rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
-                   PixelBuffer buffer, float xOff, float yOff);
+                   PixelBuffer buffer, double xOff, double yOff);
     static void sortVertices(std::array<Vec4, 3> &v, std::array<Vec4, 3> &n, std::array<Vec3, 3> &uvs);
-    Util::Color computeColor(const Mesh& mesh, const Vec3& norm, float u, float v);
+    Util::Color computeColor(const Mesh& mesh, const Vec3& norm, double u, double v);
 
     void putPixel(PixelBuffer buffer, int row, int col, Pixel&& p) const;
 
@@ -60,7 +62,7 @@ private:
 public:
     Renderer() = delete;
     Renderer(int xRes, int yRes);
-    Renderer(int xRes, int yRes, std::vector<std::tuple<float, float, float>> aaSetting);
+    Renderer(int xRes, int yRes, std::vector<std::tuple<double, double, double>> aaSetting);
     ~Renderer();
     void render(const Mesh& mesh);
     void flushToImg(const char* name);
@@ -68,6 +70,7 @@ public:
     void addLight(Light&& light);
     void setCamera(const Camera &camera);
     void setAmbientLight(const Light &ambientLight);
+
 };
 
 

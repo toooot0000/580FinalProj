@@ -3,6 +3,8 @@
 //
 
 #include "Renderer.h"
+
+#include <utility>
 #include "Mesh.h"
 
 Renderer::Renderer(int xRes, int yRes):
@@ -15,7 +17,7 @@ Renderer::Renderer(int xRes, int yRes):
 
 
 
-Renderer::Renderer(int xRes, int yRes, std::vector<std::tuple<float, float, float>> aaSetting)
+Renderer::Renderer(int xRes, int yRes, std::vector<std::tuple<double, double, double>> aaSetting)
         :xRes(xRes), yRes(yRes), aaSetting(std::move(aaSetting)),
         pixelBuffer(new Pixel[xRes*yRes]),
         tempBuffer(new Pixel[xRes*yRes])
@@ -94,9 +96,11 @@ void Renderer::render(const Mesh &mesh)
             uv[1][1] = vs[1];
             uv[2][1] = vs[2];
 
-            norm[0] = (nTrans * norm[0]).normalized();
-            norm[1] = (nTrans * norm[1]).normalized();
-            norm[2] = (nTrans * norm[2]).normalized();
+            norm[0] = (nTrans * norm[0]);
+            norm[1] = (nTrans * norm[1]);
+            norm[2] = (nTrans * norm[2]);
+
+
 
 //  Rasterization
             rasterize(mesh, v, norm, uv, tempBuffer, xOff, yOff);
@@ -114,7 +118,7 @@ void Renderer::render(const Mesh &mesh)
 
 
 void Renderer::rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
-                         PixelBuffer buffer, float xOff, float yOff) // Phong shading!
+                         PixelBuffer buffer, double xOff, double yOff) // Phong shading!
 {
 // Sort Vertices
     sortVertices(v, norm, uvs);
@@ -140,12 +144,12 @@ void Renderer::rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Ve
     auto l01 = Util::D2Line(v[0], v[1]);
     auto l12 = Util::D2Line(v[1], v[2]);
     auto l20 = Util::D2Line(v[2], v[0]);
-    float k01 = l01(v[2]);
-    float k12 = l12(v[0]);
-    float k20 = l20(v[1]);
-    float p01 = l01(-1, -1)*k01;
-    float p12 = l12(-1, -1)*k12;
-    float p20 = l20(-1, -1)*k20;
+    double k01 = l01(v[2]);
+    double k12 = l12(v[0]);
+    double k20 = l20(v[1]);
+    double p01 = l01(-1, -1)*k01;
+    double p12 = l12(-1, -1)*k12;
+    double p20 = l20(-1, -1)*k20;
 
 
     Vec3
@@ -161,10 +165,10 @@ void Renderer::rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Ve
 
 //        Write tempBuffer
     for (int x0 = xMin; x0 <= xMax; x0++) {
-        auto x = static_cast<float>(x0) + xOff;
-        auto t01 = l01(x, static_cast<float>(yMin) + yOff);
-        auto t12 = l12(x, static_cast<float>(yMin) + yOff);
-        auto t20 = l20(x, static_cast<float>(yMin) + yOff);
+        auto x = static_cast<double>(x0) + xOff;
+        auto t01 = l01(x, static_cast<double>(yMin) + yOff);
+        auto t12 = l12(x, static_cast<double>(yMin) + yOff);
+        auto t20 = l20(x, static_cast<double>(yMin) + yOff);
         for (int y0 = yMin; y0 <= yMax; y0++) {
             auto theta = t01 / k01,
                     alpha = t12 / k12,
@@ -185,13 +189,12 @@ void Renderer::rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Ve
                 curNorm[0] = fs.dot(nxs);
                 curNorm[1] = fs.dot(nys);
                 curNorm[2] = fs.dot(nzs);
-
+                curNorm.normalize();
 //                Backface culling
 //                Remove all pixel that face back to the camera
-                if(curNorm.getZ() < 0.f){
-                    continue;
-                }
-                curNorm.normalize();
+//                if(curNorm.getZ() < 0){
+//                    continue;
+//                }
                 putPixel(buffer, y0, x0, {computeColor(mesh, curNorm, curU, curV), z});
             }
             t01 += l01.B;
@@ -224,7 +227,7 @@ void Renderer::sortVertices(std::array<Vec4, 3> &v, std::array<Vec4, 3> &n, std:
 }
 
 
-Util::Color Renderer::computeColor(const Mesh &mesh, const Vec3& norm, float u, float v)
+Util::Color Renderer::computeColor(const Mesh &mesh, const Vec3& norm, double u, double v)
 {
 //  Color = kd*[light.intensity*max(0, norm * (-light.dir))]
 //          + ks*[light.intensity*max(0, (norm * h)^s )]
@@ -233,25 +236,33 @@ Util::Color Renderer::computeColor(const Mesh &mesh, const Vec3& norm, float u, 
     Vec3 sumD(0, 0, 0), sumS(0, 0, 0), cmr(0, 0, -1);
 
     for(const auto& light : lights){
-//        If light shot at the back of the triangle, skip this light;
-        if(light.direction.dot(norm) * cmr.dot(norm) < 0){
+//        If light shot at the back of the pixel, skip this light;
+        if(light.direction.dot(norm)*cmr.dot(norm) < 0){
             continue;
         }
 //        Compute sumS;
         Vec3 h = (cmr + light.direction).normalized();
-        float temp = std::pow(std::abs(norm.dot(h)), mesh.getS());
+        double temp = std::pow(std::abs(norm.dot(h)), mesh.getS());
         sumS += light.color.toVec3().scaled(temp);
-        sumS = clamp(sumS, {0, 0, 0}, {1, 1, 1});
+        sumS.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});
 //        Compute sumD
         temp = std::abs(norm.dot(light.direction));
         sumD += light.color.toVec3().scaled(temp);
-        sumD = clamp(sumD, {0, 0, 0}, {1, 1, 1});
+        sumD.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});
     }
 
-    Vec3 ret = mesh.getKa().scaled(ambientLight.color.toVec3())
-            + mesh.getKd().scaled(sumD)
-            + mesh.getKs().scaled(sumS);
-    clamp(ret, {0, 0, 0}, {1, 1, 1});
+    Vec3 ret;
+    if(mesh.getTexture().isSet){
+        auto tex = mesh.getTexture().lookup(u, v).toVec3();
+        ret = tex.scaled(ambientLight.color.toVec3())
+                + tex.scaled(sumD)
+                + tex.scaled(sumS);
+    } else {
+        ret = mesh.getKa().scaled(ambientLight.color.toVec3())
+              + mesh.getKd().scaled(sumD)
+              + mesh.getKs().scaled(sumS);
+    }
+    ret.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});
     return Util::Color(ret);
 }
 
@@ -320,3 +331,4 @@ void Renderer::clearBuffer(PixelBuffer buffer) const
 }
 
 
+Light::Light(const Vec3& direction, Util::Color color) : direction(std::move(direction.normalized())), color(std::move(color)) {}

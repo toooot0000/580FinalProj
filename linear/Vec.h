@@ -71,13 +71,13 @@ public:
      * getLength
      * @return
      */
-    [[nodiscard]] float length() const;
+    [[nodiscard]] double length() const;
 
     /**
      * get normalized
      * @return
      */
-    [[nodiscard]] Vec<float, N> normalized() const;
+    [[nodiscard]] Vec<double, N> normalized() const;
 
     /*
      * get negative();
@@ -193,6 +193,12 @@ public:
         }
     }
 
+    inline void clamp(const Vec &l, const Vec &h){
+        for(int i = 0; i<N; i++){
+            arr[i] = (arr[i]<l[i]? l[i]: (arr[i]>h[i]? h[i]:arr[i]));
+        }
+    }
+
 };
 
 
@@ -302,9 +308,9 @@ Vec<T, N> Vec<T, N>::plus(const Vec<T, N> &other) const
  */
 template<typename T, size_t N>
 requires (N > 0)
-float Vec<T, N>::length() const
+double Vec<T, N>::length() const
 {
-    float ret = 0;
+    double ret = 0;
     for (auto &i: arr)
     {
         ret += std::pow(i, 2);
@@ -318,15 +324,15 @@ float Vec<T, N>::length() const
  */
 template<typename T, size_t N>
 requires (N > 0)
-[[nodiscard]] Vec<float, N> Vec<T, N>::normalized() const
+[[nodiscard]] Vec<double, N> Vec<T, N>::normalized() const
 {
-    float len = length();
+    double len = length();
     std::array<T, N> newArr;
     for (size_t i = 0; i < N; ++i)
     {
         newArr[i] = arr[i] / len;
     }
-    return Vec<float, N>(newArr);
+    return Vec<double, N>(newArr);
 }
 
 /*
@@ -504,7 +510,7 @@ Vec<T, N>::Vec(const Vec<T, M> &other, Ts...rest)
 
 
 template<size_t N>
-static Vec<int, N> round(const Vec<float, N> &vec)
+static Vec<int, N> round(const Vec<double, N> &vec)
 {
     Vec<int, N> ret;
     for (int i = 0; i < N; i++)
@@ -515,9 +521,9 @@ static Vec<int, N> round(const Vec<float, N> &vec)
 }
 
 typedef Vec<int, 2> iVec2;
-typedef Vec<float, 3> Vec3;
+typedef Vec<double, 3> Vec3;
 typedef Vec<int, 3> iVec3;
-typedef Vec<float, 4> Vec4;
+typedef Vec<double, 4> Vec4;
 
 
 
@@ -525,9 +531,10 @@ template<typename T, size_t N>
 static inline Vec<T, N> clamp(const Vec<T, N> &v, const Vec<T, N> &l, const Vec<T, N> &h){
     Vec<T, N> ret;
     for(int i = 0; i<N; i++){
-        ret[i] = (v[i]<l[i]? l[i]: (v[i]>h[i]? h[i]:v[i]));
+        ret[i] = std::clamp(v[i], l[i], h[i]);
     }
     return ret;
 }
+
 
 #endif //CG_VEC_H

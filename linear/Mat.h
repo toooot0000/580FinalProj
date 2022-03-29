@@ -89,7 +89,7 @@ public:
 
     Mat<T, M - 1, N - 1> remainMat(size_t i, size_t j) const;
 
-    [[nodiscard]] float determinant() const;
+    [[nodiscard]] double determinant() const;
 
     /**
      * Return the card of the matrix
@@ -133,14 +133,14 @@ public:
 
     Mat(std::initializer_list<T> initList) : value(*(initList.begin())) {}
 
-    float determinant() const
+    double determinant() const
     {
         return value;
     }
 };
 
-typedef Mat<float, 3, 3> Mat3;
-typedef Mat<float, 4, 4> Mat4;
+typedef Mat<double, 3, 3> Mat3;
+typedef Mat<double, 4, 4> Mat4;
 
 
 template<typename T, size_t M, size_t N>
@@ -422,13 +422,13 @@ noexcept
 
 template<typename T, size_t M, size_t N>
 requires (M > 0 && N > 0)
-float Mat<T, M, N>::determinant() const
+double Mat<T, M, N>::determinant() const
 {
     static_assert(M == N, "Only square matrices have determinant!");
 #if M == 2
     return mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
 #else
-    float res = 0;
+    double res = 0;
     for (size_t i = 0; i != M; ++i)
     {
         res += (i & 1 ? -1 : 1) * mat[0][i] * remainMat(0, i).determinant();
@@ -451,7 +451,7 @@ size_t card() { return 0; };
 
 static inline Mat4 makeViewportTrans(int nx, int ny)
 {
-    auto _nx = static_cast<float>(nx), _ny = static_cast<float>(ny);
+    auto _nx = static_cast<double>(nx), _ny = static_cast<double>(ny);
     return Mat4({
             _nx / 2.0f, 0, 0, (_nx) / 2.0f,
             0, _ny / 2.0f, 0, (_ny) / 2.0f,
@@ -459,9 +459,9 @@ static inline Mat4 makeViewportTrans(int nx, int ny)
             0, 0, 0, 1});
 }
 
-static inline Mat4 makeViewportTrans(int nx, int ny, float depth)
+static inline Mat4 makeViewportTrans(int nx, int ny, double depth)
 {
-    auto _nx = static_cast<float>(nx), _ny = static_cast<float>(ny);
+    auto _nx = static_cast<double>(nx), _ny = static_cast<double>(ny);
     return Mat4({
                         _nx / 2.0f, 0, 0, (_nx) / 2.0f,
                         0, _ny / 2.0f, 0, (_ny) / 2.0f,
@@ -469,7 +469,7 @@ static inline Mat4 makeViewportTrans(int nx, int ny, float depth)
                         0, 0, 0, 1});
 }
 
-static inline Mat4 makeOrthographicProjectTrans(float l, float b, float n, float r, float t, float f)
+static inline Mat4 makeOrthographicProjectTrans(double l, double b, double n, double r, double t, double f)
 {
     assert(r != l && t != b && f < n);
     return Mat4({2.0f / (r - l), 0, 0,
@@ -478,7 +478,7 @@ static inline Mat4 makeOrthographicProjectTrans(float l, float b, float n, float
                  -(n + f) / (n - f), 0, 0, 0, 1});
 }
 
-static inline Mat4 makePerspectiveProjectTrans(float l = -1, float b = -1, float n = -1.5, float r=1, float t=1, float f=-10000)
+static inline Mat4 makePerspectiveProjectTrans(double l = -1, double b = -1, double n = -1.5, double r=1, double t=1, double f=-10000)
 {
     return Mat4({
                         2.0f * n / (r - l), 0, (r + l) / (l - r), 0,
@@ -487,9 +487,9 @@ static inline Mat4 makePerspectiveProjectTrans(float l = -1, float b = -1, float
                         0, 0, 1, 0});
 }
 
-static inline Mat4 makePerspectiveProjectTransV2(float fov)
+static inline Mat4 makePerspectiveProjectTransV2(double fov)
 {
-    fov = std::tan(fov/180.f * std::numbers::pi_v<float>/2);
+    fov = std::tan(fov/180.f * std::numbers::pi_v<double>/2);
     return Mat4({
         1, 0, 0, 0,
         0, 1, 0, 0,
@@ -513,7 +513,7 @@ static inline Mat4 makeCameraTrans(const Vec3 &eye, const Vec3 &gaze, const Vec3
                 0, 0, 0, 1});
 }
 
-static inline Mat4 makeTranslateTrans(float x, float y, float z)
+static inline Mat4 makeTranslateTrans(double x, double y, double z)
 {
     return Mat4({
         1, 0, 0, x,
@@ -523,7 +523,7 @@ static inline Mat4 makeTranslateTrans(float x, float y, float z)
     });
 }
 
-static inline Mat4 makeScaleTrans(float k){
+static inline Mat4 makeScaleTrans(double k){
     return Mat4({
         k, 0, 0, 0,
         0, k, 0, 0,
@@ -532,9 +532,9 @@ static inline Mat4 makeScaleTrans(float k){
     });
 }
 
-static inline Mat4 makeXRotationTrans(float deg){
+static inline Mat4 makeXRotationTrans(double deg){
     using namespace std;
-    float rad = deg/180.f * std::numbers::pi_v<float>;
+    double rad = deg/180.f * std::numbers::pi_v<double>;
     return {
         1, 0, 0, 0,
         0, cos(rad), -sin(rad), 0,
@@ -543,9 +543,9 @@ static inline Mat4 makeXRotationTrans(float deg){
     };
 }
 
-static inline Mat4 makeYRotationTrans(float deg){
+static inline Mat4 makeYRotationTrans(double deg){
     using namespace std;
-    float rad = deg/180.f * std::numbers::pi_v<float>;
+    double rad = deg/180.f * std::numbers::pi_v<double>;
     return {
             cos(rad), 0, sin(rad), 0,
             0, 1, 0, 0,
@@ -555,9 +555,9 @@ static inline Mat4 makeYRotationTrans(float deg){
 }
 
 
-static inline Mat4 makeZRotationTrans(float deg){
+static inline Mat4 makeZRotationTrans(double deg){
     using namespace std;
-    float rad = deg/180.f * std::numbers::pi_v<float>;
+    double rad = deg/180.f * std::numbers::pi_v<double>;
     return {
             cos(rad), -sin(rad), 0, 0,
             sin(rad), cos(rad), 0, 0,
@@ -568,7 +568,7 @@ static inline Mat4 makeZRotationTrans(float deg){
 
 static inline Mat4 makeNormTrans(const Mat4 &ori){
     const auto &row = ori[0];
-    float k = std::sqrt(row[0]*row[0] + row[1]*row[1] + row[2]*row[2]);
+    double k = std::sqrt(row[0]*row[0] + row[1]*row[1] + row[2]*row[2]);
     return {
         ori[0][0]/k, ori[0][1]/k, ori[0][2]/k, 0,
         ori[1][0]/k, ori[1][1]/k, ori[1][2]/k, 0,
