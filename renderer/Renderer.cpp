@@ -50,22 +50,22 @@ void Renderer::render(const Mesh &mesh)
         clearBuffer(tempBuffer);
 
 //  Loop triangles; For each triangle, apply transformation, interpolate color with Phong shading
-        for (const Tri &indTri: mesh.getTris())
+        for (const Tri &tri: mesh.getTris())
         {
             std::array<Vec4, 3> v, norm;
             std::array<Vec3, 3> uv;
 
-            v[0] = Vec4(mesh.getVertices()[indTri.vers[0] - 1], 1);
-            v[1] = Vec4(mesh.getVertices()[indTri.vers[1] - 1], 1);
-            v[2] = Vec4(mesh.getVertices()[indTri.vers[2] - 1], 1);
+            v[0] = Vec4(tri[0].position, 1);
+            v[1] = Vec4(tri[1].position, 1);
+            v[2] = Vec4(tri[2].position, 1);
 
-            uv[0] = mesh.getUvs()[indTri.uv[0] - 1];
-            uv[1] = mesh.getUvs()[indTri.uv[1] - 1];
-            uv[2] = mesh.getUvs()[indTri.uv[2] - 1];
+            uv[0] = tri[0].uvw;
+            uv[1] = tri[1].uvw;
+            uv[2] = tri[2].uvw;
 
-            norm[0] = Vec4(mesh.getNorms()[indTri.norm[0] - 1].normalized(), 1);
-            norm[1] = Vec4(mesh.getNorms()[indTri.norm[1] - 1].normalized(), 1);
-            norm[2] = Vec4(mesh.getNorms()[indTri.norm[2] - 1].normalized(), 1);
+            norm[0] = Vec4(tri[0].normal, 1);
+            norm[1] = Vec4(tri[1].normal, 1);
+            norm[2] = Vec4(tri[2].normal, 1);
 
 //  Apply the transformation
             v[0] = std::move(trans * v[0]);
@@ -265,7 +265,6 @@ Util::Color Renderer::computeColor(const Mesh &mesh, const Vec3& norm, double u,
     ret.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});
     return Util::Color(ret);
 }
-
 
 
 void Renderer::flushToImg(const char *name)

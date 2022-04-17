@@ -4,7 +4,7 @@
 
 #ifndef INC_580_FINAL_PROJ_UTIL_H
 #define INC_580_FINAL_PROJ_UTIL_H
-#include "../tgaimage/tgaimage.h"
+#include "../lib/tgaimage/tgaimage.h"
 #include "../linear/Vec.h"
 #include <iostream>
 
@@ -111,6 +111,12 @@ namespace Util
         double operator()(double x, double y) const;
         double operator()(int x, int y) const;
     };
+
+    struct Ray{
+        Vec3 start;
+        Vec3 dir;
+    };
+
 };
 
 

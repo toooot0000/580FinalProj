@@ -19,7 +19,7 @@ Mesh ObjLoader::load(const char *filename)
     ifstream obj(filename);
     string line, op;
     vector<Vec3> vs, uvs, norms;
-    vector<Tri> tris;
+    vector<TriInd> tris;
 
     while(getline(obj, line)){
         if(line[0] == '#'){
@@ -63,14 +63,14 @@ Mesh ObjLoader::load(const char *filename)
                     groupsNum++;
                 }
                 if(nums.size() == 3){
-                    Tri tri{
+                    TriInd tri{
                             {nums[0][0], nums[1][0], nums[2][0]},
                             {nums[0][1], nums[1][1], nums[2][1]},
                             {nums[0][2], nums[1][2], nums[2][2]}
                     };
                     tris.emplace_back(tri);
                 } else if(nums.size() == 4) {
-                    Tri tri1{
+                    TriInd tri1{
                             {nums[0][0], nums[1][0], nums[2][0]},
                             {nums[0][1], nums[1][1], nums[2][1]},
                             {nums[0][2], nums[1][2], nums[2][2]}

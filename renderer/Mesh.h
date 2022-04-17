@@ -9,8 +9,10 @@
 #include "../util/util.h"
 #include <vector>
 #include <array>
+#include "Tri.h"
 
-struct Tri{
+
+struct TriInd{
     /**
      * Vertices index;
      */
@@ -26,12 +28,13 @@ struct Tri{
 };
 
 
+
 struct Texture{
     size_t width{}, height{};
     std::vector<Util::Color> colorMap;
     bool isSet = false;
 
-    inline size_t index(size_t i, size_t j) const{
+    [[nodiscard]] inline size_t index(size_t i, size_t j) const{
         return (height - j - 1) * width + i;
     }
 
@@ -54,10 +57,8 @@ class Mesh
 {
 private:
 
-    std::vector<Vec3> vertices;
-    std::vector<Vec3> uvs;
-    std::vector<Vec3> norms;
     std::vector<Tri> tris;
+
     Vec3 ka{0.1, 0.1, 0.1}, ks{.3, .3, .3}, kd{.7, .7, .7};
     double s = 50;
     double scale = 1;
@@ -67,18 +68,12 @@ private:
 
 public:
 
-    Mesh(std::vector<Vec3> vertices, std::vector<Vec3> uvs, std::vector<Vec3> norms,
-         std::vector<Tri> tris);
+    Mesh(const std::vector<Vec3> &vertices, const std::vector<Vec3> &uvs, const std::vector<Vec3> &norms,
+         const std::vector<TriInd>& tris);
 
-    Mesh(std::vector<Vec3> vertices, std::vector<Vec3> uvs, std::vector<Vec3> norms,
-         std::vector<Tri> tris, Texture && texture);
+    Mesh(const std::vector<Vec3> &vertices, const std::vector<Vec3> &uvs, const std::vector<Vec3> &norms,
+         const std::vector<TriInd>& tris, Texture && texture);
 
-
-    [[nodiscard]] inline const std::vector<Vec3> &getVertices() const {return vertices; };
-
-    [[nodiscard]] inline const std::vector<Vec3> &getUvs() const {return uvs;};
-
-    [[nodiscard]] inline const std::vector<Vec3> &getNorms() const {return norms;};
 
     [[nodiscard]] inline const std::vector<Tri> &getTris() const {return tris;};
 
@@ -122,6 +117,7 @@ public:
     void setTexture(Texture &&texture);
 
     [[nodiscard]] const Texture &getTexture() const;
+
 
 };
 

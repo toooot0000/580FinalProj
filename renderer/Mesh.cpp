@@ -7,8 +7,25 @@
 #include <utility>
 
 
-Mesh::Mesh(std::vector<Vec3> vertices, std::vector<Vec3> uvs, std::vector<Vec3> norms,
-           std::vector<Tri> tris) : vertices(std::move(vertices)), uvs(std::move(uvs)), norms(std::move(norms)), tris(std::move(tris)) {}
+Mesh::Mesh(const std::vector<Vec3> &vertices, const std::vector<Vec3> &uvs, const std::vector<Vec3> &norms, const std::vector<TriInd>& tris)
+{
+    for(const auto& ind : tris){
+        Vertex v1{
+                vertices[ind.vers[0] - 1],
+                norms[ind.norm[0] - 1].normalized(),
+                uvs[ind.uv[0] - 1]
+        }, v2{
+                vertices[ind.vers[1] - 1],
+                norms[ind.norm[1] - 1].normalized(),
+                uvs[ind.uv[1] - 1]
+        }, v3{
+                vertices[ind.vers[2] - 1],
+                norms[ind.norm[2] - 1].normalized(),
+                uvs[ind.uv[2] - 1]
+        };
+        this->tris.emplace_back(Tri{std::move(v1), std::move(v2), std::move(v3)});
+    }
+}
 
 void Mesh::setScale(double scale)
 {
@@ -105,20 +122,32 @@ void Mesh::setTexture(Texture &&texture)
     this->texture = std::move(texture);
 }
 
-Mesh::Mesh(std::vector<Vec3> vertices, std::vector<Vec3> uvs, std::vector<Vec3> norms, std::vector<Tri> tris,
-           Texture &&texture):
-           vertices(std::move(vertices)),
-           uvs(std::move(uvs)),
-           norms(std::move(norms)),
-           tris(std::move(tris)),
-           texture(std::move(texture))
-{}
+Mesh::Mesh(const std::vector<Vec3> &vertices, const std::vector<Vec3> &uvs, const std::vector<Vec3> &norms, const std::vector<TriInd>& tris,
+           Texture &&texture)
+           :texture(std::move(texture))
+{
+    for(const auto& ind : tris){
+        Vertex v1{
+                vertices[ind.vers[0] - 1],
+                norms[ind.norm[0] - 1].normalized(),
+                uvs[ind.uv[0] - 1]
+        }, v2{
+                vertices[ind.vers[1] - 1],
+                norms[ind.norm[1] - 1].normalized(),
+                uvs[ind.uv[1] - 1]
+        }, v3{
+                vertices[ind.vers[2] - 1],
+                norms[ind.norm[2] - 1].normalized(),
+                uvs[ind.uv[2] - 1]
+        };
+        this->tris.emplace_back(Tri{std::move(v1), std::move(v2), std::move(v3)});
+    }
+}
 
 const Texture &Mesh::getTexture() const
 {
     return texture;
 }
-
 
 Util::Color Texture::lookup(double u, double v) const
 {

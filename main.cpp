@@ -14,8 +14,8 @@ void renderTeapot(Renderer &renderer){
 //    teapot.setRotateZ(90);
     teapot.setX(-5);
 
-    auto t = ObjLoader::loadTexture("obj/patrick-star.png");
-    teapot.setTexture(std::move(t));
+//    auto t = ObjLoader::loadTexture("obj/patrick-star.png");
+//    teapot.setTexture(std::move(t));
 
     renderer.render(teapot);
     renderer.flushToImg("teapot.tga");
@@ -60,25 +60,24 @@ void testTexture(){
 int main()
 {
 //    testTexture();
-    Renderer renderer(1024, 1024, {
-            {-0.52, 0.38, 0.064}, {0.41, 0.56, 0.119}, {0.27, 0.08, 0.147},
-            {-0.17, -0.29, 0.249}, {0.58, -0.55, 0.104}, {-0.31, -0.71, 0.106},
-            {0.52, -0.38, 0.064}, {-0.27, -0.08, 0.147}
-    });
+//    Renderer renderer(1024, 1024, {
+//            {-0.52, 0.38, 0.064}, {0.41, 0.56, 0.119}, {0.27, 0.08, 0.147},
+//            {-0.17, -0.29, 0.249}, {0.58, -0.55, 0.104}, {-0.31, -0.71, 0.106},
+//            {0.52, -0.38, 0.064}, {-0.27, -0.08, 0.147}
+//    });
 
-//    Renderer renderer(1024, 1024);
+    Renderer renderer(1024, 1024);
 
     renderer.addLight(
-            {Vec3{-0.7071, 0.7071, 0}, Util::Color({0.5, 0.5, 0.9}) }
+            {Vec3{-0.7071, 0.7071, 0}, Util::Color({0, 0, 1}) }
             );
     renderer.addLight(
-            {Vec3{0, -0.7071, -0.7071}, Util::Color({0.9, 0.2, 0.3}) }
+            {Vec3{0, -0.7071, -0.7071}, Util::Color({1, 0, 0}) }
             );
     renderer.addLight(
-            {Vec3{0.7071, 0.0, -0.7071}, Util::Color({0.2, 0.7, 0.3})}
+            {Vec3{0.7071, 0.0, -0.7071}, Util::Color({0, 1, 0})}
             );
 
-//    renderer.addLight({Vec3{-1, -1, -1}, Util::Color{255, 255, 255, 255}});
     renderer.setCamera({
                                Vec3{0, -25, 0},
                                Vec3{0, 0, 1},
