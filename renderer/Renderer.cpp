@@ -330,4 +330,23 @@ void Renderer::clearBuffer(PixelBuffer buffer) const
 }
 
 
+void Renderer::rayCastRender(const RayCast::Mesh &mesh)
+{
+
+    Mat4 mVp = makeViewportTrans(xRes, yRes ),
+            mPer = makePerspectiveProjectTrans(),
+            mCmr = makeCameraTrans(camera.eye, camera.gaze, camera.viewUp),
+            trans = mVp * mPer * mCmr
+                    * makeScaleTrans(mesh.getScale())
+                    * makeTranslateTrans(mesh.getX(), mesh.getY(), mesh.getZ())
+                    * makeXRotationTrans(mesh.getRotateX())
+                    * makeYRotationTrans(mesh.getRotateY())
+                    * makeZRotationTrans(mesh.getRotateZ());
+    Mat4 nTrans = makeNormTrans(makeCameraTrans(camera.eye, camera.gaze, camera.viewUp))
+                  * makeXRotationTrans(mesh.getRotateX())
+                  * makeYRotationTrans(mesh.getRotateY())
+                  * makeZRotationTrans(mesh.getRotateZ());
+}
+
+
 Light::Light(const Vec3& direction, Util::Color color) : direction(std::move(direction.normalized())), color(std::move(color)) {}

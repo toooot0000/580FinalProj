@@ -9,7 +9,7 @@
 #include "../linear/Mat.h"
 #include "../util/util.h"
 #include <vector>
-
+#include "RayCast.h"
 
 struct Camera{
     Vec3 eye;
@@ -65,6 +65,7 @@ public:
     Renderer(int xRes, int yRes, std::vector<std::tuple<double, double, double>> aaSetting);
     ~Renderer();
     void render(const Mesh& mesh);
+    void rayCastRender(const RayCast::Mesh& mesh);
     void flushToImg(const char* name);
     void addLight(const Light& light);
     void addLight(Light&& light);

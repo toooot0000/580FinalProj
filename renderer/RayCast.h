@@ -6,25 +6,40 @@
 #define INC_580_FINAL_PROJ_RAYCAST_H
 
 #include "../linear/Vec.h"
+#include "Mesh.h"
+#include "Tri.h"
+#include "../dataStructure/KdTree.h"
+
+
+typedef Mesh RayCastBaseMesh;
+typedef Tri RayCastBaseTri;
 
 namespace RayCast{
 
-    class Tri{
+    class Tri: RayCastBaseTri, KdTree::ObjectInterface{
     public:
-        virtual Vec3 operator[](int i ) const = 0;
-        virtual Vec3& operator[](int i ) = 0;
+        Tri(RayCastBaseTri&&);
+        Vec3 getRightTopFront() const;
+        Vec3 getLeftBottomBack() const;
+        int compareToOn(const ObjectInterface&, Axis axis);
     };
 
-    class Ray{
+    class Ray: KdTree::RayInterface{
+    private:
+        Vec3 startPoint;
+        Vec3 dir;
     public:
-        [[nodiscard]] virtual Vec3 getStartPoint() const = 0;
-        [[nodiscard]] virtual Vec3 getDir() const = 0;
+        Ray(Vec3  startPoint, Vec3  dir);
+        [[nodiscard]] Vec3 getStartPoint() const;
+        [[nodiscard]] Vec3 getDir() const;
     };
 
-    class RayCast
-    {
+    class Mesh: public RayCastBaseMesh{
+    private:
+        KdTree *represent = nullptr;
     public:
-        virtual const Tri & detectCollision(const Ray&) = 0;
+        Mesh(RayCastBaseMesh&&);
+        Tri* detectCollision(const Ray&);
     };
 }
 
