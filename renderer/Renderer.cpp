@@ -332,7 +332,6 @@ void Renderer::clearBuffer(PixelBuffer buffer) const
 
 void Renderer::rayCastRender(const RayCast::Mesh &mesh)
 {
-
     Mat4 mVp = makeViewportTrans(xRes, yRes ),
             mPer = makePerspectiveProjectTrans(),
             mCmr = makeCameraTrans(camera.eye, camera.gaze, camera.viewUp),
@@ -346,6 +345,8 @@ void Renderer::rayCastRender(const RayCast::Mesh &mesh)
                   * makeXRotationTrans(mesh.getRotateX())
                   * makeYRotationTrans(mesh.getRotateY())
                   * makeZRotationTrans(mesh.getRotateZ());
+
+    // UNFINISHED
 }
 
 

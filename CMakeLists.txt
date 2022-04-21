@@ -9,21 +9,20 @@ add_subdirectory(./renderer)
 add_subdirectory(./dataStructure)
 
 add_subdirectory(./lib/lodepng-master)
-add_subdirectory(./lib/catch2)
 add_subdirectory(./lib/tgaimage)
 
 
 add_executable(580_Final_Proj main.cpp ObjLoader.h ObjLoader.cpp)
 target_include_directories(580_Final_Proj PRIVATE ./lib)
+
 target_link_libraries(
         580_Final_Proj
         PUBLIC linear
         PUBLIC tgaimage
+        PUBLIC lodepng
         PRIVATE renderer
         PRIVATE util
-        PUBLIC lodepng
         PRIVATE dataStruct
-        PUBLIC catch2
 )
 
 add_custom_target(
@@ -33,3 +32,7 @@ add_custom_target(
         ${CMAKE_BINARY_DIR}/obj
         )
 add_dependencies(580_Final_Proj copy-files)
+
+
+# Test Related
+add_subdirectory(./test)
