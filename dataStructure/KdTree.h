@@ -9,6 +9,7 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <concepts>
 
 
 class KdTree
@@ -23,7 +24,7 @@ public:
         };
         [[nodiscard]] virtual Vec3 getRightTopFront() const = 0;
         [[nodiscard]] virtual Vec3 getLeftBottomBack() const = 0;
-        [[nodiscard]] virtual int compareToOn(const ObjectInterface&, Axis axis) const = 0;
+//        [[nodiscard]] virtual int compareToOn(const ObjectInterface&, Axis axis) const = 0;
 
         [[nodiscard]] inline int isOn(Axis axis, double val) const {
             if(val > getRightTopFront()[axis]){
@@ -59,6 +60,10 @@ private:
         KdNode *leftChild, *rightChild;
         std::vector<const ObjectInterface* > triPtrList;
 
+        [[nodiscard]] inline bool hasPartition() const {
+            return axis != ObjectInterface::Axis::NO;
+        }
+
         ~KdNode();
 
     };
@@ -74,9 +79,29 @@ private:
 
 public:
 
+
+    KdTree() = default;
     explicit KdTree(const std::vector<ObjectInterface>&);
 
+    template<class T>
+    requires std::derived_from<T, ObjectInterface>
+    explicit KdTree(const std::vector<T>& oriObjs){
+        std::vector<const ObjectInterface*> objs;
+        Vec3 RTF{INT_MIN, INT_MIN, INT_MIN}, LBB{INT_MAX, INT_MAX, INT_MAX};
+        for(const auto &obj : oriObjs){
+            objs.emplace_back(static_cast<const ObjectInterface*>(&obj));
+            for(auto i : {0, 1, 2}){
+                RTF[i] = std::max(RTF[i], obj.getRightTopFront()[i]);
+                LBB[i] = std::min(LBB[i], obj.getLeftBottomBack()[i]);
+            }
+        }
+
+        root = std::move(std::unique_ptr<KdNode>(buildTree(objs, LBB, RTF)));
+    };
+
     const ObjectInterface* traverse(const RayInterface&) ;
+
+    [[nodiscard]] const KdNode *getRoot() const;
 
 };
 

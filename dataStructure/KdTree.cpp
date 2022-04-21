@@ -150,6 +150,11 @@ const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
     return nullptr;
 }
 
+const KdTree::KdNode *KdTree::getRoot() const
+{
+    return static_cast<const KdNode*>(root.get());
+}
+
 vector<KdTree::KdNode* > KdTree::RayInterface::intersect(const KdTree::KdNode *node) const
 {
     if(!node){
