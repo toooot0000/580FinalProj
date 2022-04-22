@@ -20,9 +20,9 @@ target_link_libraries(
         PUBLIC linear
         PUBLIC tgaimage
         PUBLIC lodepng
-        PRIVATE renderer
-        PRIVATE util
-        PRIVATE dataStruct
+        PUBLIC renderer
+        PUBLIC util
+        PUBLIC dataStruct
 )
 
 add_custom_target(

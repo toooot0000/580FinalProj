@@ -6,7 +6,6 @@
 #include "ObjLoader.h"
 #include <string>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <vector>
 #include <tuple>
@@ -14,7 +13,7 @@
 
 using namespace std;
 
-Mesh ObjLoader::load(const char *filename)
+Mesh<> ObjLoader::load(const char *filename)
 {
     ifstream obj(filename);
     string line, op;

@@ -138,16 +138,23 @@ const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
         que.pop();
         if(!cur){
             continue;
-        } else if(!cur->rightChild && !cur->leftChild){
+        } else if(!cur->hasPartition()){
             copy(cur->triPtrList.begin(), cur->triPtrList.end(), candidates.end());
         } else {
-            for(const auto next : ray.intersect(cur)){
+            for(const auto next : cur->intersectingChildren(ray)){
                 que.emplace(next);
             }
         }
     }
-
-    return nullptr;
+    KdTree::ObjectInterface const* ret;
+    double curT = INT_MAX;
+    for(auto obj : candidates){
+        double t = ray.detectCollision(obj);
+        if(t < curT){
+            ret = obj;
+        }
+    }
+    return ret;
 }
 
 const KdTree::KdNode *KdTree::getRoot() const
@@ -155,34 +162,30 @@ const KdTree::KdNode *KdTree::getRoot() const
     return static_cast<const KdNode*>(root.get());
 }
 
-vector<KdTree::KdNode* > KdTree::RayInterface::intersect(const KdTree::KdNode *node) const
-{
-    if(!node){
-        return {};
-    }
-    if(node->axis == ObjectInterface::Axis::NO){
-        return {};
-    }
-    auto sp = getStartPoint()[node->axis];
-    auto d = getDir()[node->axis];
-    auto t = (node->val - sp)/d;
-    if(t>0){
-        if(sp < node->val){
-            return {node->leftChild, node->rightChild};
-        } else {
-            return {node->rightChild, node->leftChild};
-        }
-    } else {
-        if(sp < node->val){
-            return {node->leftChild};
-        } else {
-            return {node->rightChild};
-        }
-    }
-}
-
 KdTree::KdNode::~KdNode()
 {
     delete leftChild;
     delete rightChild;
+}
+
+std::vector<KdTree::KdNode*> KdTree::KdNode::intersectingChildren(const KdTree::RayInterface& ray) const{
+    if(axis == ObjectInterface::Axis::NO){
+        return {};
+    }
+    auto sp = ray.getStartPoint()[axis];
+    auto d = ray.getDir()[axis];
+    auto t = (val - sp)/d;
+    if(t>0){
+        if(sp < val){
+            return {leftChild, rightChild};
+        } else {
+            return {rightChild, leftChild};
+        }
+    } else {
+        if(sp < val){
+            return {leftChild};
+        } else {
+            return {rightChild};
+        }
+    }
 }

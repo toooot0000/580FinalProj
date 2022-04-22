@@ -24,7 +24,6 @@ public:
         };
         [[nodiscard]] virtual Vec3 getRightTopFront() const = 0;
         [[nodiscard]] virtual Vec3 getLeftBottomBack() const = 0;
-//        [[nodiscard]] virtual int compareToOn(const ObjectInterface&, Axis axis) const = 0;
 
         [[nodiscard]] inline int isOn(Axis axis, double val) const {
             if(val > getRightTopFront()[axis]){
@@ -37,13 +36,10 @@ public:
         }
     };
 
-    class RayInterface{
-        friend class KdTree;
-    public:
+    struct RayInterface{
         [[nodiscard]] virtual Vec3 getStartPoint() const = 0;
         [[nodiscard]] virtual Vec3 getDir() const = 0;
-    private:
-        std::vector<KdNode*> intersect(const KdNode *node) const;
+        [[nodiscard]] virtual double detectCollision(const ObjectInterface*) const = 0;
     };
 
 
@@ -63,6 +59,8 @@ private:
         [[nodiscard]] inline bool hasPartition() const {
             return axis != ObjectInterface::Axis::NO;
         }
+
+        [[nodiscard]] std::vector<KdNode*> intersectingChildren(const RayInterface& ray) const;
 
         ~KdNode();
 
@@ -98,6 +96,23 @@ public:
 
         root = std::move(std::unique_ptr<KdNode>(buildTree(objs, LBB, RTF)));
     };
+
+    template<class T>
+    requires std::derived_from<T, ObjectInterface>
+    explicit KdTree(const std::vector<const T* >& oriObjs){
+        std::vector<const ObjectInterface*> objs;
+        Vec3 RTF{INT_MIN, INT_MIN, INT_MIN}, LBB{INT_MAX, INT_MAX, INT_MAX};
+        for(const auto obj : oriObjs){
+            objs.emplace_back(static_cast<const ObjectInterface*>(obj));
+            for(auto i : {0, 1, 2}){
+                RTF[i] = std::max(RTF[i], obj->getRightTopFront()[i]);
+                LBB[i] = std::min(LBB[i], obj->getLeftBottomBack()[i]);
+            }
+        }
+
+        root = std::move(std::unique_ptr<KdNode>(buildTree(oriObjs, LBB, RTF)));
+    };
+
 
     const ObjectInterface* traverse(const RayInterface&) ;
 

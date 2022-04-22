@@ -11,20 +11,25 @@
 #include "../dataStructure/KdTree.h"
 
 
-typedef Mesh RayCastBaseMesh;
 typedef Tri RayCastBaseTri;
+namespace RayCast{
+    class Tri: public RayCastBaseTri, public KdTree::ObjectInterface{
+    private:
+        Vec3 rtf, lbb;
+    public:
+        Tri(const Vertex& v1, const Vertex& v2, const Vertex& v3): RayCastBaseTri(v1, v2, v3){} ;
+        Tri(Vertex&& v1, Vertex&& v2, Vertex&& v3): RayCastBaseTri(v1, v2, v3){} ;
+        explicit Tri(RayCastBaseTri&&);
+        [[nodiscard]] inline Vec3 getRightTopFront() const override { return rtf; };
+        [[nodiscard]] inline Vec3 getLeftBottomBack() const override { return lbb; };
+    };
+}
+
+typedef Mesh<RayCast::Tri> RayCastBaseMesh;
+
 
 namespace RayCast{
-
-    class Tri: RayCastBaseTri, KdTree::ObjectInterface{
-    public:
-        Tri(RayCastBaseTri&&);
-        Vec3 getRightTopFront() const;
-        Vec3 getLeftBottomBack() const;
-        int compareToOn(const ObjectInterface&, Axis axis);
-    };
-
-    class Ray: KdTree::RayInterface{
+    class Ray: public KdTree::RayInterface{
     private:
         Vec3 startPoint;
         Vec3 dir;
@@ -36,9 +41,12 @@ namespace RayCast{
 
     class Mesh: public RayCastBaseMesh{
     private:
+        Mesh(const std::vector<Vec3> &vertices, const std::vector<Vec3> &uvs, const std::vector<Vec3> &norms,
+             const std::vector<TriInd> &tris);
+
         KdTree *represent = nullptr;
     public:
-        Mesh(RayCastBaseMesh&&);
+
         Tri* detectCollision(const Ray&);
     };
 }

@@ -29,6 +29,8 @@ struct Pixel{
     double z{-2};
 };
 
+template<class T>
+requires std::derived_from<T, Tri>
 class Mesh;
 
 typedef Pixel* PixelBuffer;
@@ -50,10 +52,10 @@ private:
     std::vector<std::tuple<double, double, double>> aaSetting{std::tuple{0, 0, 1}};
 
 
-    void rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
+    void rasterize(const Mesh<> &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
                    PixelBuffer buffer, double xOff, double yOff);
     static void sortVertices(std::array<Vec4, 3> &v, std::array<Vec4, 3> &n, std::array<Vec3, 3> &uvs);
-    Util::Color computeColor(const Mesh& mesh, const Vec3& norm, double u, double v);
+    Util::Color computeColor(const Mesh<>& mesh, const Vec3& norm, double u, double v);
 
     void putPixel(PixelBuffer buffer, int row, int col, Pixel&& p) const;
 
@@ -64,7 +66,7 @@ public:
     Renderer(int xRes, int yRes);
     Renderer(int xRes, int yRes, std::vector<std::tuple<double, double, double>> aaSetting);
     ~Renderer();
-    void render(const Mesh& mesh);
+    void render(const Mesh<>& mesh);
     void rayCastRender(const RayCast::Mesh& mesh);
     void flushToImg(const char* name);
     void addLight(const Light& light);

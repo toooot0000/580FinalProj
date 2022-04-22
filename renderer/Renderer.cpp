@@ -25,7 +25,7 @@ Renderer::Renderer(int xRes, int yRes, std::vector<std::tuple<double, double, do
 }
 
 
-void Renderer::render(const Mesh &mesh)
+void Renderer::render(const Mesh<> &mesh)
 {
 //  DONE: Compute transformation matrix;
     Mat4 mVp = makeViewportTrans(xRes, yRes ),
@@ -117,7 +117,7 @@ void Renderer::render(const Mesh &mesh)
 }
 
 
-void Renderer::rasterize(const Mesh &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
+void Renderer::rasterize(const Mesh<> &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
                          PixelBuffer buffer, double xOff, double yOff) // Phong shading!
 {
 // Sort Vertices
@@ -227,7 +227,7 @@ void Renderer::sortVertices(std::array<Vec4, 3> &v, std::array<Vec4, 3> &n, std:
 }
 
 
-Util::Color Renderer::computeColor(const Mesh &mesh, const Vec3& norm, double u, double v)
+Util::Color Renderer::computeColor(const Mesh<> &mesh, const Vec3& norm, double u, double v)
 {
 //  Color = kd*[light.intensity*max(0, norm * (-light.dir))]
 //          + ks*[light.intensity*max(0, (norm * h)^s )]
@@ -345,8 +345,9 @@ void Renderer::rayCastRender(const RayCast::Mesh &mesh)
                   * makeXRotationTrans(mesh.getRotateX())
                   * makeYRotationTrans(mesh.getRotateY())
                   * makeZRotationTrans(mesh.getRotateZ());
-
     // UNFINISHED
+
+
 }
 
 
