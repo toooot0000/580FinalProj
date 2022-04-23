@@ -139,7 +139,9 @@ const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
         if(!cur){
             continue;
         } else if(!cur->hasPartition()){
-            copy(cur->triPtrList.begin(), cur->triPtrList.end(), candidates.end());
+            auto end = candidates.end();
+            candidates.resize(candidates.size() + cur->triPtrList.size());
+            copy(cur->triPtrList.begin(), cur->triPtrList.end(), end);
         } else {
             for(const auto next : cur->intersectingChildren(ray)){
                 que.emplace(next);
