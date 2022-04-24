@@ -5,6 +5,8 @@
 #include "KdTree.h"
 #include <algorithm>
 #include <queue>
+#include <list>
+#include <utility>
 
 using namespace std;
 
@@ -12,7 +14,7 @@ using namespace std;
 KdTree::KdNode * KdTree::buildTree(std::vector<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF)
 {
     /*
-     * 1. Get RTB, LBF
+     * 1. Get RTF, LBB
      * 1. Find partition
      * 2. Record
      */
@@ -58,22 +60,31 @@ KdTree::PartitionResult KdTree::makePartition(std::vector<const ObjectInterface 
     size_t form = INT_MAX, bestForm = INT_MAX;
 
     for(auto curAxis : {ObjectInterface::Axis::X, ObjectInterface::Axis::Y, ObjectInterface::Axis::Z}){
-        vector<const ObjectInterface*> lObjs, rObjs, shrObjs;
-        vector<const ObjectInterface*> const* targetObjs = &objs;
+        list<const ObjectInterface*> lObjs(objs.begin(), objs.end()), rObjs, shrObjs;
+        list<const ObjectInterface*> *targetObjs = &lObjs;
         auto l = LBB[curAxis], r = RTF[curAxis], mid = .0;
 
         while((r - l) > PartitionResolution && form > PartitionThreshold){
             mid = (r-l)/2 + l;
-            for(const auto obj : *targetObjs){
+            auto it = targetObjs->begin();
+            decltype(it) prev;
+            while(it != targetObjs->end()){
+                auto obj = *it;
+                prev = it;
+                ++it;
                 switch (obj->isOn(curAxis, mid)){
                     case 0:
-                        shrObjs.emplace_back(obj);
+                        shrObjs.splice(shrObjs.end(), *targetObjs, prev, std::next(prev));
                         break;
                     case 1:
-                        rObjs.emplace_back(obj);
+                        if(targetObjs != &rObjs){
+                            rObjs.splice(rObjs.end(), *targetObjs, prev, std::next(prev));
+                        }
                         break;
                     case -1:
-                        lObjs.emplace_back(obj);
+                        if(targetObjs != &lObjs){
+                            lObjs.splice(lObjs.end(), *targetObjs, prev, std::next(prev));
+                        }
                         break;
                     default:
                         break;
@@ -91,23 +102,17 @@ KdTree::PartitionResult KdTree::makePartition(std::vector<const ObjectInterface 
             if(lObjs.size() > rObjs.size()){
                 r = mid;
                 targetObjs = &lObjs;
-                for(const auto obj : shrObjs){
-                    rObjs.emplace_back(obj);
-                }
-                shrObjs.clear();
+                rObjs.splice(rObjs.end(), shrObjs);
             } else if (lObjs.size() < rObjs.size()){
                 l = mid;
                 targetObjs = &rObjs;
-                for(const auto obj : shrObjs){
-                    lObjs.emplace_back(obj);
-                }
-                shrObjs.clear();
+                lObjs.splice(lObjs.end(), shrObjs);
             } else {
                 break;
             }
         }
     }
-    if(form == objs.size()){
+    if(bestForm == objs.size()){
         resAxis = ObjectInterface::Axis::NO;
     }
     return {resAxis, resVal};
@@ -150,6 +155,12 @@ const KdTree::KdNode *KdTree::getRoot() const
     return static_cast<const KdNode*>(root.get());
 }
 
+std::ostream &operator<<(std::ostream& os, const KdTree &tree)
+{
+    tree.getRoot()->output(os);
+    return os;
+}
+
 KdTree::KdNode::~KdNode()
 {
     delete leftChild;
@@ -188,5 +199,35 @@ const Vec3 &KdTree::RayInterface::getDir() const
     return dir;
 }
 
-KdTree::RayInterface::RayInterface(const Vec3 &startPoint, const Vec3 &dir) : startPoint(startPoint), dir(dir)
+KdTree::RayInterface::RayInterface(Vec3 startPoint, Vec3 dir) : startPoint(std::move(startPoint)), dir(std::move(dir))
 {}
+
+
+void KdTree::KdNode::output(ostream &os, std::string* buff) const {
+    if(!buff){
+        buff = new std::string();
+    }
+    os << *buff << "[\n";
+    os << *buff << "axis: " << axis << "\n";
+    os << *buff << "val: " << val << "\n";
+    os << *buff << "lbb: " << LBB << "\n";
+    os << *buff << "rtf: " << RTF << "\n";
+
+    buff->resize(buff->size()+2, '-');
+
+    if(leftChild){
+        leftChild->output(os, buff);
+    }
+    if(rightChild){
+        rightChild->output(os, buff);
+    }
+
+    buff->resize(buff->size() - 2);
+
+    os << *buff << "]\n";
+
+    if(buff->empty()){
+        delete buff;
+    }
+}
+

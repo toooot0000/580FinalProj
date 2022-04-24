@@ -14,6 +14,7 @@
 
 class KdTree
 {
+
 private:
     struct KdNode;
 
@@ -27,9 +28,9 @@ public:
 
         [[nodiscard]] inline int isOn(Axis axis, double val) const {
             if(val > getRightTopFront()[axis]){
-                return 1;
-            } else if(val < getLeftBottomBack()[axis]){
                 return -1;
+            } else if(val < getLeftBottomBack()[axis]){
+                return 1;
             } else {
                 return 0;
             }
@@ -39,22 +40,17 @@ public:
     struct RayInterface{
         Vec3 startPoint, dir;
 
-        RayInterface(const Vec3 &startPoint, const Vec3 &dir);
+        RayInterface(Vec3 startPoint, Vec3 dir);
 
         [[nodiscard]] const Vec3& getStartPoint() const ;
         [[nodiscard]] const Vec3& getDir() const ;
         [[nodiscard]] virtual double intersect(const ObjectInterface*) const = 0;
     };
 
-
 private:
-
-    constexpr static const double PartitionResolution = .5;
-    constexpr static const int PartitionThreshold = 10;
-
     struct KdNode{
-        // TopLeftFront, BottomRightBack
-        Vec3 LBF, RTB;
+        // TopLeftBack, BottomRightFront
+        Vec3 LBB, RTF;
         ObjectInterface::Axis axis;
         double val;
         KdNode *leftChild, *rightChild;
@@ -63,12 +59,16 @@ private:
         [[nodiscard]] inline bool hasPartition() const {
             return axis != ObjectInterface::Axis::NO;
         }
-
         [[nodiscard]] std::vector<KdNode*> intersectingChildren(const RayInterface& ray) const;
-
         ~KdNode();
+        void output(std::ostream &os, std::string* buff = nullptr) const;
 
     };
+
+    constexpr static const double PartitionResolution = .5;
+    constexpr static const int PartitionThreshold = 1;
+
+
 
     struct PartitionResult{
         ObjectInterface::Axis axis;
@@ -120,6 +120,8 @@ public:
     const ObjectInterface* traverse(const RayInterface&) ;
 
     [[nodiscard]] const KdNode *getRoot() const;
+
+    friend std::ostream &operator<<(std::ostream& os, const KdTree&);
 
 };
 

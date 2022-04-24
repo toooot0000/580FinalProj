@@ -50,8 +50,17 @@ public:
 
     Vec &operator=(const Vec &other);
 
-    Vec &operator=(Vec &&other)
-    noexcept;
+    Vec &operator=(Vec &&other)noexcept;
+
+
+    friend bool operator==(const Vec<T, N>& lhs, const Vec<T, N>& rhs){
+        for(int i = 0; i<N; i++){
+            if(lhs[i] != rhs[i]){
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * Dot production
