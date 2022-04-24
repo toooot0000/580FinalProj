@@ -80,6 +80,7 @@ public:
     Mesh(Mesh&& other) noexcept;
 
     [[nodiscard]] inline const std::vector<T> &getTris() const {return tris;};
+    [[nodiscard]] inline std::vector<T> &getTris() {return tris;};
 
 
     void setScale(double scale);

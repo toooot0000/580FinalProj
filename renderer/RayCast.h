@@ -9,6 +9,7 @@
 #include "Mesh.h"
 #include "Tri.h"
 #include "../dataStructure/KdTree.h"
+#include "../linear/Mat.h"
 
 
 typedef Tri RayCastBaseTri;
@@ -16,9 +17,17 @@ namespace RayCast{
     class Tri: public RayCastBaseTri, public KdTree::ObjectInterface{
     private:
         Vec3 rtf, lbb;
+
+        inline void updateBoundary(){
+            for(auto i : {0, 1, 2}){
+                lbb[i] = std::min({this->operator[](0).position[i], this->operator[](1).position[i], this->operator[](2).position[i]});
+                rtf[i] = std::max({this->operator[](0).position[i], this->operator[](1).position[i], this->operator[](2).position[i]});
+            }
+        }
+
     public:
-        Tri(const Vertex& v1, const Vertex& v2, const Vertex& v3): RayCastBaseTri(v1, v2, v3){} ;
-        Tri(Vertex&& v1, Vertex&& v2, Vertex&& v3): RayCastBaseTri(v1, v2, v3){} ;
+        Tri(const Vertex& v1, const Vertex& v2, const Vertex& v3);
+        Tri(Vertex&& v1, Vertex&& v2, Vertex&& v3);
         explicit Tri(RayCastBaseTri&&);
         [[nodiscard]] inline Vec3 getRightTopFront() const override { return rtf; };
         [[nodiscard]] inline Vec3 getLeftBottomBack() const override { return lbb; };
@@ -52,6 +61,7 @@ namespace RayCast{
         KdTree *represent = nullptr;
 
     public:
+        void buildTree(const Mat4& toCmr, const Mat4& nToCmr);
         [[nodiscard]] const Tri* detectCollision(const Ray&) const override ;
     };
 
