@@ -59,12 +59,12 @@ KdTree::PartitionResult KdTree::makePartition(std::vector<const ObjectInterface 
 
     for(auto curAxis : {ObjectInterface::Axis::X, ObjectInterface::Axis::Y, ObjectInterface::Axis::Z}){
         vector<const ObjectInterface*> lObjs, rObjs, shrObjs;
-        vector<const ObjectInterface*> & targetObjs = objs;
+        vector<const ObjectInterface*> const* targetObjs = &objs;
         auto l = LBB[curAxis], r = RTF[curAxis], mid = .0;
 
         while((r - l) > PartitionResolution && form > PartitionThreshold){
             mid = (r-l)/2 + l;
-            for(const auto obj : targetObjs){
+            for(const auto obj : *targetObjs){
                 switch (obj->isOn(curAxis, mid)){
                     case 0:
                         shrObjs.emplace_back(obj);
@@ -90,14 +90,14 @@ KdTree::PartitionResult KdTree::makePartition(std::vector<const ObjectInterface 
             }
             if(lObjs.size() > rObjs.size()){
                 r = mid;
-                targetObjs = lObjs;
+                targetObjs = &lObjs;
                 for(const auto obj : shrObjs){
                     rObjs.emplace_back(obj);
                 }
                 shrObjs.clear();
             } else if (lObjs.size() < rObjs.size()){
                 l = mid;
-                targetObjs = rObjs;
+                targetObjs = &rObjs;
                 for(const auto obj : shrObjs){
                     lObjs.emplace_back(obj);
                 }
@@ -113,20 +113,6 @@ KdTree::PartitionResult KdTree::makePartition(std::vector<const ObjectInterface 
     return {resAxis, resVal};
 }
 
-KdTree::KdTree(const vector<ObjectInterface> &oriObjs)
-{
-    vector<const ObjectInterface*> objs;
-    Vec3 RTF, LBB;
-    for(const auto &obj : oriObjs){
-        objs.emplace_back(&obj);
-        for(auto i : {0, 1, 2}){
-            RTF[i] = max(RTF[i], obj.getRightTopFront()[i]);
-            LBB[i] = min(LBB[i], obj.getLeftBottomBack()[i]);
-        }
-    }
-
-    root = move(unique_ptr<KdNode>(buildTree(objs, LBB, RTF)));
-}
 
 const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
 {
@@ -151,7 +137,7 @@ const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
     KdTree::ObjectInterface const* ret;
     double curT = INT_MAX;
     for(auto obj : candidates){
-        double t = ray.detectCollision(obj);
+        double t = ray.intersect(obj);
         if(t < curT){
             ret = obj;
         }
@@ -191,3 +177,16 @@ std::vector<KdTree::KdNode*> KdTree::KdNode::intersectingChildren(const KdTree::
         }
     }
 }
+
+const Vec3 &KdTree::RayInterface::getStartPoint() const
+{
+    return startPoint;
+}
+
+const Vec3 &KdTree::RayInterface::getDir() const
+{
+    return dir;
+}
+
+KdTree::RayInterface::RayInterface(const Vec3 &startPoint, const Vec3 &dir) : startPoint(startPoint), dir(dir)
+{}

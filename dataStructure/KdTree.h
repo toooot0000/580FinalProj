@@ -37,9 +37,13 @@ public:
     };
 
     struct RayInterface{
-        [[nodiscard]] virtual Vec3 getStartPoint() const = 0;
-        [[nodiscard]] virtual Vec3 getDir() const = 0;
-        [[nodiscard]] virtual double detectCollision(const ObjectInterface*) const = 0;
+        Vec3 startPoint, dir;
+
+        RayInterface(const Vec3 &startPoint, const Vec3 &dir);
+
+        [[nodiscard]] const Vec3& getStartPoint() const ;
+        [[nodiscard]] const Vec3& getDir() const ;
+        [[nodiscard]] virtual double intersect(const ObjectInterface*) const = 0;
     };
 
 
@@ -79,7 +83,6 @@ public:
 
 
     KdTree() = default;
-    explicit KdTree(const std::vector<ObjectInterface>&);
 
     template<class T>
     requires std::derived_from<T, ObjectInterface>
