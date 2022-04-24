@@ -27,8 +27,10 @@ public:
     Tri(const Vertex& v1, const Vertex& v2, const Vertex& v3);
     Tri(Vertex&& v1, Vertex&& v2, Vertex&& v3);
     explicit Tri(std::array<Vertex, 3>  vs);
+
     Vertex& operator[](size_t i);
-    Vertex operator[](size_t i) const;
+    const Vertex& operator[](size_t i) const;
+//    Vertex operator[](size_t i) const;
 };
 
 

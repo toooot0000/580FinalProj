@@ -24,7 +24,7 @@ Vertex &Tri::operator[](size_t i)
     return vertices[i];
 }
 
-Vertex Tri::operator[](size_t i) const
+const Vertex& Tri::operator[](size_t i) const
 {
     return vertices[i];
 }

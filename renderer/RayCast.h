@@ -30,25 +30,36 @@ typedef Mesh<RayCast::Tri> RayCastBaseMesh;
 
 namespace RayCast{
     class Ray: public KdTree::RayInterface{
-    private:
-        Vec3 startPoint;
-        Vec3 dir;
     public:
-        Ray(Vec3  startPoint, Vec3  dir);
-        [[nodiscard]] Vec3 getStartPoint() const;
-        [[nodiscard]] Vec3 getDir() const;
+        Ray(const Vec3&  startPoint, const Vec3&  dir);
+        [[nodiscard]] double intersect(const KdTree::ObjectInterface*) const override;
     };
 
-    class Mesh: public RayCastBaseMesh{
+    class MeshInterface: public RayCastBaseMesh{
+    public:
+        MeshInterface(
+                const std::vector<Vec3> &vertices,
+                const std::vector<Vec3> &uvs,
+                const std::vector<Vec3> &norms,
+                const std::vector<TriInd> &tris): RayCastBaseMesh(vertices, uvs, norms, tris){};
+        [[nodiscard]] virtual const Tri* detectCollision(const Ray&) const = 0;
+    };
+
+    class Mesh: public MeshInterface{
     private:
         Mesh(const std::vector<Vec3> &vertices, const std::vector<Vec3> &uvs, const std::vector<Vec3> &norms,
              const std::vector<TriInd> &tris);
-
         KdTree *represent = nullptr;
-    public:
 
-        Tri* detectCollision(const Ray&);
+    public:
+        [[nodiscard]] const Tri* detectCollision(const Ray&) const override ;
     };
+
+    class PlainMesh: public MeshInterface{
+    public:
+        [[nodiscard]] const Tri* detectCollision(const Ray&) const override;
+    };
+
 }
 
 
