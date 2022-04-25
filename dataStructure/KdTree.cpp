@@ -137,16 +137,16 @@ const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
         if(!cur){
             continue;
         } else if(!cur->hasPartition()){
-            auto end = candidates.end();
-            candidates.resize(candidates.size() + cur->triPtrList.size());
-            copy(cur->triPtrList.begin(), cur->triPtrList.end(), end);
+            for(auto& obj : cur->triPtrList){
+                candidates.emplace_back(obj);
+            }
         } else {
             for(const auto next : cur->intersectingChildren(ray)){
                 que.emplace(next);
             }
         }
     }
-    KdTree::ObjectInterface const* ret;
+    KdTree::ObjectInterface const* ret = nullptr;
     double curT = INT_MAX;
     for(auto obj : candidates){
         double t = ray.intersect(obj);

@@ -56,6 +56,9 @@ private:
                    PixelBuffer buffer, double xOff, double yOff);
     static void sortVertices(std::array<Vec4, 3> &v, std::array<Vec4, 3> &n, std::array<Vec3, 3> &uvs);
     Util::Color computeColor(const Mesh<>& mesh, const Vec3& norm, double u, double v);
+    Util::Color
+    computeColor(const RayCast::MeshInterface &mesh, const RayCast::Tri &hitTri, const Vec3 &hitPoint,
+                 const Vec3 &norm, double u, double v);
 
     void putPixel(PixelBuffer buffer, int row, int col, Pixel&& p) const;
 
@@ -67,13 +70,12 @@ public:
     Renderer(int xRes, int yRes, std::vector<std::tuple<double, double, double>> aaSetting);
     ~Renderer();
     void render(const Mesh<>& mesh);
-    void rayCastRender(const RayCast::Mesh& mesh);
+    void rayCastRender(RayCast::MeshInterface &mesh);
     void flushToImg(const char* name);
     void addLight(const Light& light);
     void addLight(Light&& light);
     void setCamera(const Camera &camera);
     void setAmbientLight(const Light &ambientLight);
-
 };
 
 

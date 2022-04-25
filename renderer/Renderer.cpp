@@ -330,24 +330,101 @@ void Renderer::clearBuffer(PixelBuffer buffer) const
 }
 
 
-void Renderer::rayCastRender(const RayCast::Mesh &mesh)
+void Renderer::rayCastRender(RayCast::MeshInterface &mesh)
 {
     Mat4 mVp = makeViewportTrans(xRes, yRes ),
-            mPer = makePerspectiveProjectTrans(),
-            mCmr = makeCameraTrans(camera.eye, camera.gaze, camera.viewUp),
-            trans = mVp * mPer * mCmr
-                    * makeScaleTrans(mesh.getScale())
-                    * makeTranslateTrans(mesh.getX(), mesh.getY(), mesh.getZ())
-                    * makeXRotationTrans(mesh.getRotateX())
-                    * makeYRotationTrans(mesh.getRotateY())
-                    * makeZRotationTrans(mesh.getRotateZ());
-    Mat4 nTrans = makeNormTrans(makeCameraTrans(camera.eye, camera.gaze, camera.viewUp))
+        mPer = makePerspectiveProjectTrans(),
+        mCmr = makeCameraTrans(camera.eye, camera.gaze, camera.viewUp),
+        trans = mCmr
+                * makeScaleTrans(mesh.getScale())
+                * makeTranslateTrans(mesh.getX(), mesh.getY(), mesh.getZ())
+                * makeXRotationTrans(mesh.getRotateX())
+                * makeYRotationTrans(mesh.getRotateY())
+                * makeZRotationTrans(mesh.getRotateZ());
+    Mat4 nTrans = makeNormTrans(mCmr)
                   * makeXRotationTrans(mesh.getRotateX())
                   * makeYRotationTrans(mesh.getRotateY())
                   * makeZRotationTrans(mesh.getRotateZ());
-    // UNFINISHED
 
 
+    mesh.applyTransformation(trans, nTrans);
+
+    double left = -1;
+    double b = -1;
+    double n = -1.5;
+    double r = 1;
+    double top = 1;
+
+    double xStep = (r - left) / xRes, yStep = (top - b) / yRes;
+
+    for(int col = 0; col < xRes; col++){
+        for(int row = 0; row < yRes; row++){
+//            Make ray
+            auto x = col * xStep + left, y = row * yStep + b;
+            RayCast::Ray ray({0, 0, 0}, {x, y, n});
+            auto collRes = mesh.detectCollision(ray);
+            if(collRes){
+                auto bct = ray.triangleIntersect(collRes);
+                auto beta = bct[0], gamma = bct[1], alpha = 1 - beta - gamma, t = bct[2];
+                auto hitPoint = t * ray.getDir();
+                auto curNorm = alpha * (*collRes)[0].normal + beta *(*collRes)[1].normal + gamma * (*collRes)[2].normal;
+                curNorm.normalize();
+                auto l = (*collRes).getWs().dot({alpha, beta, gamma});
+                auto curU = ((*collRes)[0].uvw[0] * alpha + (*collRes)[1].uvw[0] * beta +(*collRes)[2].uvw[0] * gamma )/l;
+                auto curV = ((*collRes)[0].uvw[1] * alpha + (*collRes)[1].uvw[1] * beta +(*collRes)[2].uvw[1] * gamma )/l;
+                auto color = computeColor(mesh, *collRes, hitPoint, curNorm, curU, curV);
+                putPixel(pixelBuffer, row, col, {color, 0});
+            }
+        }
+    }
+}
+
+Util::Color Renderer::computeColor(const RayCast::MeshInterface &mesh, const RayCast::Tri &hitTri, const Vec3 &hitPoint,
+                                   const Vec3 &norm, double u, double v)
+{
+
+//  Color = kd*[light.intensity*max(0, norm * (-light.dir))]
+//          + ks*[light.intensity*max(0, (norm * h)^s )]
+//          + ka*light.intensity
+//  h = (-camera.gaze in image space which is (0, 0, -1) - light.dir).normalized();
+    Vec3 sumD(0, 0, 0), sumS(0, 0, 0);
+    const Vec3& cmr = hitPoint;
+
+    for(const auto& light : lights){
+//        If light shot at the back of the pixel, skip this light;
+        if(light.direction.dot(norm)*cmr.dot(norm) < 0){
+            continue;
+        }
+//        If this light can't hit this point
+//        RayCast::Ray lightRay{hitPoint + 0.1*light.direction.negatived(), light.direction.negatived()};
+//        if(mesh.detectCollision(lightRay)){
+//            continue;
+//        }
+//        Compute sumS;
+        Vec3 h = (cmr + light.direction).normalized();
+        double temp = std::pow(std::abs(norm.dot(h)), mesh.getS());
+        sumS += light.color.toVec3().scaled(temp);
+        sumS.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});
+
+//        Compute sumD
+        temp = std::abs(norm.dot(light.direction));
+        sumD += light.color.toVec3().scaled(temp);
+        sumD.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});
+    }
+
+    Vec3 ret;
+    if(mesh.getTexture().isSet){
+        auto tex = mesh.getTexture().lookup(u, v).toVec3();
+        ret = tex.scaled(ambientLight.color.toVec3())
+              + tex.scaled(sumD)
+              + tex.scaled(sumS);
+    } else {
+        ret = mesh.getKa().scaled(ambientLight.color.toVec3())
+              + mesh.getKd().scaled(sumD)
+              + mesh.getKs().scaled(sumS);
+    }
+    ret.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});
+    return Util::Color(ret);
 }
 
 

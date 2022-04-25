@@ -346,7 +346,7 @@ static void lodepng_set32bitInt(unsigned char* buffer, unsigned value) {
 
 #ifdef LODEPNG_COMPILE_DISK
 
-/* returns negative value on error. This should be pure C compatible, so no fstat. */
+/* returns negatived value on error. This should be pure C compatible, so no fstat. */
 static long lodepng_filesize(const char* filename) {
   FILE* file;
   long size;
@@ -1701,7 +1701,7 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
         }
       }
     }
-    if(length >= 3 && offset > windowsize) ERROR_BREAK(86 /*too big (or overflown negative) offset*/);
+    if(length >= 3 && offset > windowsize) ERROR_BREAK(86 /*too big (or overflown negatived) offset*/);
 
     /*encode it as length/distance pair or literal value*/
     if(length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/ {
@@ -5534,7 +5534,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
             for(x = 0; x != linebytes; ++x) sum += (unsigned char)(attempt[type][x]);
           } else {
             for(x = 0; x != linebytes; ++x) {
-              /*For differences, each byte should be treated as signed, values above 127 are negative
+              /*For differences, each byte should be treated as signed, values above 127 are negatived
               (converted to signed char). Filtertype 0 isn't a difference though, so use unsigned there.
               This means filtertype 0 is almost never chosen, but that is justified.*/
               unsigned char s = attempt[type][x];

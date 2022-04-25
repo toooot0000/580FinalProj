@@ -89,9 +89,9 @@ public:
     [[nodiscard]] Vec<double, N> normalized() const;
 
     /*
-     * get negative();
+     * get negatived();
      */
-    [[nodiscard]] Vec<T, N> negative() const;
+    [[nodiscard]] Vec<T, N> negatived() const;
 
 
     /**
@@ -150,7 +150,7 @@ public:
 
     friend Vec operator-(const Vec<T, N> &l, const Vec<T, N> &other)
     {
-        return l.plus(other.negative());
+        return l.plus(other.negatived());
     };
 
     friend std::ostream &operator<<(std::ostream &os, const Vec &vec)
@@ -345,11 +345,11 @@ requires (N > 0)
 }
 
 /*
- * get negative();
+ * get negatived();
  */
 template<typename T, size_t N>
 requires (N > 0)
-[[nodiscard]] Vec<T, N> Vec<T, N>::negative() const
+[[nodiscard]] Vec<T, N> Vec<T, N>::negatived() const
 {
     std::array<T, N> newArr{};
     for (size_t i = 0; i < N; ++i)
@@ -427,7 +427,7 @@ template<typename T, size_t N>
 requires (N > 0)
 Vec<T, N> &Vec<T, N>::operator-=(const Vec<T, N> &other)
 {
-    translate(other.negative());
+    translate(other.negatived());
     return *this;
 }
 

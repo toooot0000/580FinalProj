@@ -503,7 +503,7 @@ static inline Mat4 makeCameraTrans(const Vec3 &eye, const Vec3 &gaze, const Vec3
 {
 //    assert(t.length() != 0 && gaze.dot(t) == 0);
     Vec3 u, v, w;
-    w = gaze.normalized().negative();
+    w = gaze.normalized().negatived();
     u = w.cross(t).normalized();
     v = w.cross(u).normalized();
     return Mat4({
