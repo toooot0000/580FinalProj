@@ -11,7 +11,7 @@
 using namespace std;
 
 
-KdTree::KdNode * KdTree::buildTree(std::vector<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF)
+KdTree::KdNode * KdTree::buildTree(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF)
 {
     /*
      * 1. Get RTF, LBB
@@ -24,20 +24,27 @@ KdTree::KdNode * KdTree::buildTree(std::vector<const ObjectInterface *> &objs, c
     lRTF[result.axis] = result.val;
     rLBB[result.axis] = result.val;
 
-    vector<const ObjectInterface *> lObjs, rObjs;
+    list<const ObjectInterface *> lObjs, rObjs;
 
-    for(const auto obj: objs){
-        switch (obj->isOn(result.axis, result.val)){
-            case 1:
-                rObjs.emplace_back(obj);
-                break;
-            case -1:
-                lObjs.emplace_back(obj);
-                break;
-            default:
-                rObjs.emplace_back(obj);
-                lObjs.emplace_back(obj);
-                break;
+    if(result.axis != ObjectInterface::Axis::NO){
+        auto it = objs.begin();
+        decltype(it) prev;
+        while(it != objs.end()){
+            prev = it;
+            auto &obj = *it;
+            ++it;
+            switch (obj->isOn(result.axis, result.val)){
+                case 1:
+                    rObjs.splice(rObjs.end(), objs, prev, next(prev));
+                    break;
+                case -1:
+                    lObjs.splice(lObjs.end(), objs, prev, next(prev));
+                    break;
+                default:
+                    rObjs.push_back(obj);
+                    lObjs.splice(lObjs.end(), objs, prev, next(prev));
+                    break;
+            }
         }
     }
 
@@ -46,13 +53,13 @@ KdTree::KdNode * KdTree::buildTree(std::vector<const ObjectInterface *> &objs, c
             result.axis, result.val,
             result.axis != ObjectInterface::Axis::NO ? buildTree(lObjs, lLBB, lRTF) : nullptr,
             result.axis != ObjectInterface::Axis::NO ? buildTree(rObjs, rLBB, rRTF) : nullptr,
-            move(objs)
+            {objs.begin(), objs.end()}
     };
 
     return node;
 }
 
-KdTree::PartitionResult KdTree::makePartition(std::vector<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF)
+KdTree::PartitionResult KdTree::makePartition(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF)
 {
     auto resAxis = ObjectInterface::Axis::NO;
     double resVal = INT_MAX;

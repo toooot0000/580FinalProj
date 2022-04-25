@@ -10,6 +10,7 @@
 #include <tuple>
 #include <algorithm>
 #include <concepts>
+#include <list>
 
 
 class KdTree
@@ -23,8 +24,8 @@ public:
         enum Axis{
             X = 0, Y = 1, Z = 2, NO = -1
         };
-        [[nodiscard]] virtual Vec3 getRightTopFront() const = 0;
-        [[nodiscard]] virtual Vec3 getLeftBottomBack() const = 0;
+        [[nodiscard]] virtual const Vec3 & getRightTopFront() const = 0;
+        [[nodiscard]] virtual const Vec3 & getLeftBottomBack() const = 0;
 
         [[nodiscard]] inline int isOn(Axis axis, double val) const {
             if(val > getRightTopFront()[axis]){
@@ -76,8 +77,8 @@ private:
     };
 
     std::unique_ptr<KdNode> root{nullptr};
-    static KdNode *buildTree(std::vector<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF);
-    static PartitionResult makePartition(std::vector<const ObjectInterface *> &obj, const Vec3 &LBB, const Vec3 &RTF);
+    static KdNode *buildTree(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF);
+    static PartitionResult makePartition(std::list<const ObjectInterface *> &obj, const Vec3 &LBB, const Vec3 &RTF);
 
 public:
 
@@ -87,7 +88,7 @@ public:
     template<class T>
     requires std::derived_from<T, ObjectInterface>
     explicit KdTree(const std::vector<T>& oriObjs){
-        std::vector<const ObjectInterface*> objs;
+        std::list<const ObjectInterface*> objs;
         Vec3 RTF{INT_MIN, INT_MIN, INT_MIN}, LBB{INT_MAX, INT_MAX, INT_MAX};
         for(const auto &obj : oriObjs){
             objs.emplace_back(static_cast<const ObjectInterface*>(&obj));
@@ -103,7 +104,7 @@ public:
     template<class T>
     requires std::derived_from<T, ObjectInterface>
     explicit KdTree(const std::vector<const T* >& oriObjs){
-        std::vector<const ObjectInterface*> objs;
+        std::list<const ObjectInterface*> objs;
         Vec3 RTF{INT_MIN, INT_MIN, INT_MIN}, LBB{INT_MAX, INT_MAX, INT_MAX};
         for(const auto obj : oriObjs){
             objs.emplace_back(static_cast<const ObjectInterface*>(obj));
