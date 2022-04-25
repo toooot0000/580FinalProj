@@ -143,7 +143,7 @@ const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
     double curT = INT_MAX;
     for(auto obj : candidates){
         double t = ray.intersect(obj);
-        if(t < curT){
+        if(t < curT && t > 0){
             ret = obj;
         }
     }

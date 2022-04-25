@@ -98,18 +98,44 @@ double RayCast::Ray::intersect(const KdTree::ObjectInterface *obj) const
     if(!tri){
         return -1;
     }
-    auto &va = (*tri)[0].position, &vb = (*tri)[1].position, &vc = (*tri)[2].position;
-    auto &e = getStartPoint(), &dir = getDir();
+    auto bct = triangleIntersect(tri);
+    auto b = bct[0], c = bct[1], t = bct[2];
+    auto a = 1 - b - c;
+    if(a > 0 && b > 0 && c > 0){
+        return t;
+    } else {
+        return -1;
+    }
+}
+
+Vec3 RayCast::Ray::triangleIntersect(const RayCast::Tri *tri) const
+{
+    const auto
+        &va = (*tri)[0].position,
+        &vb = (*tri)[1].position,
+        &vc = (*tri)[2].position;
+    const auto &e = getStartPoint(), &dir = getDir();
     Mat3 a{
-        va.getX() - vb.getX(), va.getX() - vc.getX(), dir.getX(),
-        va.getY() - vb.getY(), va.getY() - vc.getY(), dir.getY(),
-        va.getZ() - vb.getZ(), va.getZ() - vc.getZ(), dir.getZ()
+            va.getX() - vb.getX(), va.getX() - vc.getX(), dir.getX(),
+            va.getY() - vb.getY(), va.getY() - vc.getY(), dir.getY(),
+            va.getZ() - vb.getZ(), va.getZ() - vc.getZ(), dir.getZ()
+    }, d{
+            va.getX() - vb.getX(), va.getX() - vc.getX(), va.getX() - e.getX(),
+            va.getY() - vb.getY(), va.getY() - vc.getY(), va.getY() - e.getY(),
+            va.getZ() - vb.getZ(), va.getZ() - vc.getZ(), va.getZ() - e.getZ()
     }, b{
-        va.getX() - vb.getX(), va.getX() - vc.getX(), va.getX() - e.getX(),
-        va.getY() - vb.getY(), va.getY() - vc.getY(), va.getY() - e.getY(),
-        va.getZ() - vb.getZ(), va.getZ() - vc.getZ(), va.getZ() - e.getZ()
+            va.getX() - e.getX(), va.getX() - vc.getX(), dir.getX(),
+            va.getY() - e.getY(), va.getY() - vc.getY(), dir.getY(),
+            va.getZ() - e.getZ(), va.getZ() - vc.getZ(), dir.getZ()
+    }, c{
+            va.getX() - vb.getX(), va.getX() - e.getX(), dir.getX(),
+            va.getY() - vb.getY(), va.getY() - e.getY(), dir.getY(),
+            va.getZ() - vb.getZ(), va.getZ() - e.getZ(), dir.getZ()
     };
-    return b.determinant()/a.determinant();
+    double A = a.determinant();
+    return {
+        b.determinant()/A, c.determinant()/A, d.determinant()/A
+    };
 }
 
 RayCast::Tri::Tri(RayCastBaseTri && other) : RayCastBaseTri(std::move(other)){

@@ -42,6 +42,7 @@ namespace RayCast{
     public:
         Ray(const Vec3&  startPoint, const Vec3&  dir);
         [[nodiscard]] double intersect(const KdTree::ObjectInterface*) const override;
+        [[nodiscard]] Vec3 triangleIntersect(const Tri*) const;
     };
 
     class MeshInterface: public RayCastBaseMesh{
