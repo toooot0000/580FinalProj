@@ -425,16 +425,20 @@ requires (M > 0 && N > 0)
 double Mat<T, M, N>::determinant() const
 {
     static_assert(M == N, "Only square matrices have determinant!");
-#if M == 2
-    return mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
-#else
-    double res = 0;
-    for (size_t i = 0; i != M; ++i)
-    {
-        res += (i & 1 ? -1 : 1) * mat[0][i] * remainMat(0, i).determinant();
+    if(M == 2)
+        return mat[0][0] * mat[1][1] - mat[1][0] * mat[0][1];
+    else if (M == 3)
+        return mat[0][0] * (mat[1][1] * mat[2][2] - mat[1][2] * mat[2][1])
+            - mat[0][1] * (mat[1][0] * mat[2][2] - mat[2][0] * mat[1][2])
+            + mat[0][2] * (mat[1][0] * mat[2][1] - mat[2][0] * mat[1][1]);
+    else{
+        double res = 0;
+        for (size_t i = 0; i != M; ++i)
+        {
+            res += (i & 1 ? -1 : 1) * mat[0][i] * remainMat(0, i).determinant();
+        }
+        return res;
     }
-    return res;
-#endif
 };
 
 

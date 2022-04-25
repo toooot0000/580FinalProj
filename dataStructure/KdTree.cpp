@@ -11,7 +11,7 @@
 using namespace std;
 
 
-KdTree::KdNode * KdTree::buildTree(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF)
+KdTree::KdNode * KdTree::buildTree(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF, int curLayer)
 {
     /*
      * 1. Get RTF, LBB
@@ -51,11 +51,20 @@ KdTree::KdNode * KdTree::buildTree(std::list<const ObjectInterface *> &objs, con
     auto *node = new KdNode{
             LBB, RTF,
             result.axis, result.val,
-            result.axis != ObjectInterface::Axis::NO ? buildTree(lObjs, lLBB, lRTF) : nullptr,
-            result.axis != ObjectInterface::Axis::NO ? buildTree(rObjs, rLBB, rRTF) : nullptr,
+            result.axis != ObjectInterface::Axis::NO ? buildTree(lObjs, lLBB, lRTF, curLayer+1) : nullptr,
+            result.axis != ObjectInterface::Axis::NO ? buildTree(rObjs, rLBB, rRTF, curLayer+1) : nullptr,
             {objs.begin(), objs.end()}
     };
+    if(node->triPtrList.size() > maxTri){
+        maxTri = node->triPtrList.size();
+    }
+    if(result.axis == ObjectInterface::Axis::NO && node->triPtrList.size() < minTri){
+        minTri = node->triPtrList.size();
+    }
 
+    if(result.axis == ObjectInterface::Axis::NO && curLayer > layer){
+        layer = curLayer;
+    }
     return node;
 }
 
@@ -126,36 +135,36 @@ KdTree::PartitionResult KdTree::makePartition(std::list<const ObjectInterface *>
 }
 
 
-const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
-{
-    queue<KdNode* > que;
-    que.emplace(root.get());
-    vector<const ObjectInterface*> candidates;
-    while(!que.empty()){
-        auto cur = que.front();
-        que.pop();
-        if(!cur){
-            continue;
-        } else if(!cur->hasPartition()){
-            for(auto& obj : cur->triPtrList){
-                candidates.emplace_back(obj);
-            }
-        } else {
-            for(const auto next : cur->intersectingChildren(ray)){
-                que.emplace(next);
-            }
-        }
-    }
-    KdTree::ObjectInterface const* ret = nullptr;
-    double curT = INT_MAX;
-    for(auto obj : candidates){
-        double t = ray.intersect(obj);
-        if(t < curT && t > 0){
-            ret = obj;
-        }
-    }
-    return ret;
-}
+//const KdTree::ObjectInterface *KdTree::traverse(const KdTree::RayInterface &ray)
+//{
+//    queue<KdNode* > que;
+//    que.emplace(root.get());
+//    vector<const ObjectInterface*> candidates;
+//    while(!que.empty()){
+//        auto cur = que.front();
+//        que.pop();
+//        if(!cur){
+//            continue;
+//        } else if(!cur->hasPartition()){
+//            for(auto& obj : cur->triPtrList){
+//                candidates.emplace_back(obj);
+//            }
+//        } else {
+//            for(const auto next : cur->intersectingChildren(ray)){
+//                que.emplace(next);
+//            }
+//        }
+//    }
+//    KdTree::ObjectInterface const* ret = nullptr;
+//    double curT = INT_MAX;
+//    for(auto obj : candidates){
+//        double t = ray.intersect(obj);
+//        if(t < curT && t > 0){
+//            ret = obj;
+//        }
+//    }
+//    return ret;
+//}
 
 const KdTree::KdNode *KdTree::getRoot() const
 {
@@ -166,6 +175,26 @@ std::ostream &operator<<(std::ostream& os, const KdTree &tree)
 {
     tree.getRoot()->output(os);
     return os;
+}
+
+bool KdTree::traverse(const KdTree::RayInterface &ray, std::vector<ObjectInterface const *> &result, const KdTree::KdNode *curNode)
+{
+    if(!curNode){
+        return false;
+    }
+    if(!curNode->hasPartition()){
+        for(auto& obj : curNode->triPtrList){
+            result.emplace_back(obj);
+        }
+        return true;
+    } else {
+        for(const auto& nextNode : curNode->intersectingChildren(ray)){
+            if(traverse(ray, result, nextNode)){
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 KdTree::KdNode::~KdNode()
@@ -181,11 +210,36 @@ std::vector<KdTree::KdNode*> KdTree::KdNode::intersectingChildren(const KdTree::
     auto sp = ray.getStartPoint()[axis];
     auto d = ray.getDir()[axis];
     auto t = (val - sp)/d;
+//    auto hp = ray.getDir();
+//    hp.scale(t);
+//    hp.translate(ray.getStartPoint());
+
+//    auto inside = true;
+//    for(auto tAxis : {ObjectInterface::Axis::X, ObjectInterface::Axis::Y, ObjectInterface::Axis::Z}){
+//        if(tAxis == axis){
+//            continue;
+//        }
+//        if(hp[tAxis] > RTF[tAxis] || hp[tAxis] < LBB[tAxis]){
+//            inside = false;
+//            break;
+//        }
+//    }
+
     if(t>0){
         if(sp < val){
             return {leftChild, rightChild};
+//            if(inside){
+//                return {leftChild, rightChild};
+//            } else {
+//                return {rightChild};
+//            }
         } else {
             return {rightChild, leftChild};
+//            if(inside){
+//                return {rightChild, leftChild};
+//            } else {
+//                return {leftChild};
+//            }
         }
     } else {
         if(sp < val){

@@ -50,8 +50,6 @@ private:
     PixelBuffer tempBuffer;
     int xRes, yRes;
     std::vector<std::tuple<double, double, double>> aaSetting{std::tuple{0, 0, 1}};
-
-
     void rasterize(const Mesh<> &mesh, std::array<Vec4, 3> &v, std::array<Vec4, 3> &norm, std::array<Vec3, 3> &uvs,
                    PixelBuffer buffer, double xOff, double yOff);
     static void sortVertices(std::array<Vec4, 3> &v, std::array<Vec4, 3> &n, std::array<Vec3, 3> &uvs);
@@ -59,9 +57,7 @@ private:
     Util::Color
     computeColor(const RayCast::MeshInterface &mesh, const RayCast::Tri &hitTri, const Vec3 &hitPoint,
                  const Vec3 &norm, double u, double v);
-
     void putPixel(PixelBuffer buffer, int row, int col, Pixel&& p) const;
-
     void clearBuffer(PixelBuffer buffer) const;
 
 public:
@@ -76,6 +72,7 @@ public:
     void addLight(Light&& light);
     void setCamera(const Camera &camera);
     void setAmbientLight(const Light &ambientLight);
+    void clearBuffer();
 };
 
 

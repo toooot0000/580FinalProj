@@ -12,11 +12,27 @@ const RayCast::Tri * RayCast::Mesh::detectCollision(const RayCast::Ray &ray) con
     if(!represent){
         return nullptr;
     }
-    auto ret = represent->traverse(ray);
-    if(ret == nullptr){
+
+    std::vector<KdTree::ObjectInterface const*> result;
+    auto root = represent->getRoot();
+    represent->traverse(ray, result, root);
+
+    if(result.empty()){
         return nullptr;
     }
-    return dynamic_cast<const Tri*>(ret);
+
+    Tri const* ret = nullptr;
+    double curT = INT_MAX;
+    for(auto& cand : result){
+        auto bct = ray.triangleIntersect(dynamic_cast<const Tri*>(cand));
+        auto a = 1-bct[0]-bct[1];
+        if(bct[2]>0 && a>0 && bct[0]>0 && bct[1]>0){
+            if(bct[2] < curT){
+                ret = dynamic_cast<const Tri*>(cand);
+            }
+        }
+    }
+    return ret;
 }
 
 RayCast::Mesh::Mesh(const std::vector<Vec3> &vertices, const std::vector<Vec3> &uvs, const std::vector<Vec3> &norms,
@@ -91,6 +107,11 @@ void RayCast::Mesh::applyTransformation(const Mat4& toCmr, const Mat4& nToCmr)
     represent = new KdTree(getTris());
 }
 
+KdTree *RayCast::Mesh::getRepresent() const
+{
+    return represent;
+}
+
 
 RayCast::Ray::Ray(const Vec3& startPoint, const Vec3& dir)
     :RayInterface(startPoint, dir.normalized())
@@ -156,11 +177,11 @@ const RayCast::Tri *RayCast::PlainMesh::detectCollision(const RayCast::Ray &ray)
 {
     Tri const* ret = nullptr;
     double curT = INT_MAX;
-    for(auto& tri : getTris()){
-        auto ptr = dynamic_cast<KdTree::ObjectInterface const*>(&tri);
-        double t = ray.intersect(ptr);
-        if(t > 0 && t < curT){
-            curT = t;
+    for(const auto& tri : getTris()){
+        auto bct = ray.triangleIntersect(&tri);
+        auto a = 1-bct[0]-bct[1];
+        if(bct[2]>0 && a>0 && bct[0]>0 && bct[1]>0 && bct[2] < curT){
+            curT = bct[2];
             ret = &tri;
         }
     }

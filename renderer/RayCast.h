@@ -69,6 +69,9 @@ namespace RayCast{
              const std::vector<TriInd> &tris);
         void applyTransformation(const Mat4 &toCmr, const Mat4 &nToCmr) override;
         [[nodiscard]] const Tri* detectCollision(const Ray&) const override ;
+
+        [[nodiscard]] KdTree *getRepresent() const;
+
     };
 
     class PlainMesh: public MeshInterface{
@@ -78,6 +81,8 @@ namespace RayCast{
         void applyTransformation(const Mat4 &toCmr, const Mat4 &nToCmr) override;
         [[nodiscard]] const Tri* detectCollision(const Ray&) const override;
     };
+
+
 
 }
 

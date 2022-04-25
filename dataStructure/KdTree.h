@@ -66,9 +66,8 @@ private:
 
     };
 
-    constexpr static const double PartitionResolution = .5;
-    constexpr static const int PartitionThreshold = 1;
-
+    constexpr static const double PartitionResolution = .05;
+    constexpr static const int PartitionThreshold = 5;
 
 
     struct PartitionResult{
@@ -77,8 +76,8 @@ private:
     };
 
     std::unique_ptr<KdNode> root{nullptr};
-    static KdNode *buildTree(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF);
-    static PartitionResult makePartition(std::list<const ObjectInterface *> &obj, const Vec3 &LBB, const Vec3 &RTF);
+    KdNode *buildTree(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF, int curLayer);
+    PartitionResult makePartition(std::list<const ObjectInterface *> &obj, const Vec3 &LBB, const Vec3 &RTF);
 
 public:
 
@@ -98,7 +97,7 @@ public:
             }
         }
 
-        root = std::move(std::unique_ptr<KdNode>(buildTree(objs, LBB, RTF)));
+        root = std::move(std::unique_ptr<KdNode>(buildTree(objs, LBB, RTF, 0)));
     };
 
     template<class T>
@@ -114,16 +113,21 @@ public:
             }
         }
 
-        root = std::move(std::unique_ptr<KdNode>(buildTree(oriObjs, LBB, RTF)));
+        root = std::move(std::unique_ptr<KdNode>(buildTree(oriObjs, LBB, RTF, 0)));
     };
 
 
-    const ObjectInterface* traverse(const RayInterface&) ;
+//    const ObjectInterface* traverse(const RayInterface&) ;
+    bool traverse(const KdTree::RayInterface &ray, std::vector<ObjectInterface const *> &result, const KdTree::KdNode *curNode);
 
     [[nodiscard]] const KdNode *getRoot() const;
 
     friend std::ostream &operator<<(std::ostream& os, const KdTree&);
 
+public:
+    int layer = 0;
+    int maxTri = 0;
+    int minTri = INT_MAX;
 };
 
 

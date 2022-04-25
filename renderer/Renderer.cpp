@@ -329,7 +329,6 @@ void Renderer::clearBuffer(PixelBuffer buffer) const
     }
 }
 
-
 void Renderer::rayCastRender(RayCast::MeshInterface &mesh)
 {
     Mat4 mVp = makeViewportTrans(xRes, yRes ),
@@ -357,10 +356,14 @@ void Renderer::rayCastRender(RayCast::MeshInterface &mesh)
 
     double xStep = (r - left) / xRes, yStep = (top - b) / yRes;
 
-    for(int col = 0; col < xRes; col++){
-        for(int row = 0; row < yRes; row++){
+    double x = left - xStep, y;
+
+    for(int i = 0; i < xRes; i++){
+        x += xStep;
+        y = b - yStep;
+        for(int j = 0; j < yRes; j++){
 //            Make ray
-            auto x = col * xStep + left, y = row * yStep + b;
+            y += yStep;
             RayCast::Ray ray({0, 0, 0}, {x, y, n});
             auto collRes = mesh.detectCollision(ray);
             if(collRes){
@@ -373,7 +376,7 @@ void Renderer::rayCastRender(RayCast::MeshInterface &mesh)
                 auto curU = ((*collRes)[0].uvw[0] * alpha + (*collRes)[1].uvw[0] * beta +(*collRes)[2].uvw[0] * gamma )/l;
                 auto curV = ((*collRes)[0].uvw[1] * alpha + (*collRes)[1].uvw[1] * beta +(*collRes)[2].uvw[1] * gamma )/l;
                 auto color = computeColor(mesh, *collRes, hitPoint, curNorm, curU, curV);
-                putPixel(pixelBuffer, row, col, {color, 0});
+                putPixel(pixelBuffer, j, i, {color, 0});
             }
         }
     }
@@ -396,10 +399,10 @@ Util::Color Renderer::computeColor(const RayCast::MeshInterface &mesh, const Ray
             continue;
         }
 //        If this light can't hit this point
-//        RayCast::Ray lightRay{hitPoint + 0.1*light.direction.negatived(), light.direction.negatived()};
-//        if(mesh.detectCollision(lightRay)){
-//            continue;
-//        }
+        RayCast::Ray lightRay{hitPoint + 0.5*light.direction.negatived(), light.direction.negatived()};
+        if(mesh.detectCollision(lightRay)){
+            continue;
+        }
 //        Compute sumS;
         Vec3 h = (cmr + light.direction).normalized();
         double temp = std::pow(std::abs(norm.dot(h)), mesh.getS());
@@ -427,5 +430,10 @@ Util::Color Renderer::computeColor(const RayCast::MeshInterface &mesh, const Ray
     return Util::Color(ret);
 }
 
+void Renderer::clearBuffer()
+{
+    clearBuffer(pixelBuffer);
+    clearBuffer(tempBuffer);
+}
 
 Light::Light(const Vec3& direction, Util::Color color) : direction(std::move(direction.normalized())), color(std::move(color)) {}
