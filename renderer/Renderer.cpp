@@ -37,7 +37,7 @@ void Renderer::render(const Mesh<> &mesh)
                 * makeXRotationTrans(mesh.getRotateX())
                 * makeYRotationTrans(mesh.getRotateY())
                 * makeZRotationTrans(mesh.getRotateZ());
-     Mat4 nTrans = makeNormTrans(makeCameraTrans(camera.eye, camera.gaze, camera.viewUp))
+     Mat4 nTrans = makeNormTrans(mCmr)
                    * makeXRotationTrans(mesh.getRotateX())
                    * makeYRotationTrans(mesh.getRotateY())
                    * makeZRotationTrans(mesh.getRotateZ());
@@ -399,12 +399,13 @@ Util::Color Renderer::computeColor(const RayCast::MeshInterface &mesh, const Ray
             continue;
         }
 //        If this light can't hit this point
-        RayCast::Ray lightRay{hitPoint + 0.5*light.direction.negatived(), light.direction.negatived()};
+        RayCast::Ray lightRay{hitPoint + 0.01*light.direction.negatived(), light.direction.negatived()};
         if(mesh.detectCollision(lightRay)){
             continue;
         }
 //        Compute sumS;
         Vec3 h = (cmr + light.direction).normalized();
+//        Vec3 h = (Vec3{ 0, 0, -1 } + light.direction).normalized();
         double temp = std::pow(std::abs(norm.dot(h)), mesh.getS());
         sumS += light.color.toVec3().scaled(temp);
         sumS.clamp(Vec3{0, 0, 0}, Vec3{1, 1, 1});

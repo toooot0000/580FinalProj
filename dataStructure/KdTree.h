@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <concepts>
 #include <list>
+#include <unordered_set>
 
 
 class KdTree
@@ -51,7 +52,7 @@ public:
 private:
     struct KdNode{
         // TopLeftBack, BottomRightFront
-        Vec3 LBB, RTF;
+//        Vec3 LBB, RTF;
         ObjectInterface::Axis axis;
         double val;
         KdNode *leftChild, *rightChild;
@@ -66,8 +67,8 @@ private:
 
     };
 
-    constexpr static const double PartitionResolution = .05;
-    constexpr static const int PartitionThreshold = 5;
+    constexpr static const double PartitionResolution = 2;
+    constexpr static const int PartitionThreshold = 20;
 
 
     struct PartitionResult{
@@ -78,6 +79,12 @@ private:
     std::unique_ptr<KdNode> root{nullptr};
     KdNode *buildTree(std::list<const ObjectInterface *> &objs, const Vec3 &LBB, const Vec3 &RTF, int curLayer);
     PartitionResult makePartition(std::list<const ObjectInterface *> &obj, const Vec3 &LBB, const Vec3 &RTF);
+
+    bool traverse(const RayInterface&,
+                  const KdTree::KdNode *curNode,
+                  ObjectInterface const* &ret,
+                  double &curT,
+                  std::unordered_set<ObjectInterface const*> &seen) const;
 
 public:
 
@@ -116,9 +123,7 @@ public:
         root = std::move(std::unique_ptr<KdNode>(buildTree(oriObjs, LBB, RTF, 0)));
     };
 
-
-//    const ObjectInterface* traverse(const RayInterface&) ;
-    bool traverse(const KdTree::RayInterface &ray, std::vector<ObjectInterface const *> &result, const KdTree::KdNode *curNode);
+    [[nodiscard]] const ObjectInterface* traverse(const RayInterface&) const;
 
     [[nodiscard]] const KdNode *getRoot() const;
 
