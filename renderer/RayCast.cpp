@@ -160,7 +160,7 @@ const RayCast::Tri *RayCast::PlainMesh::detectCollision(const RayCast::Ray &ray)
     for(const auto& tri : getTris()){
         auto bct = ray.triangleIntersect(&tri);
         auto a = 1-bct[0]-bct[1];
-        if(bct[2]>0 && a>0 && bct[0]>0 && bct[1]>0 && bct[2] < curT){
+        if(bct[2]>0 && a>=0 && bct[0]>0 && bct[1]>0 && bct[2] < curT){
             curT = bct[2];
             ret = &tri;
         }

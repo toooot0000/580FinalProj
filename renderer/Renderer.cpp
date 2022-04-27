@@ -356,28 +356,47 @@ void Renderer::rayCastRender(RayCast::MeshInterface &mesh)
 
     double xStep = (r - left) / xRes, yStep = (top - b) / yRes;
 
-    double x = left - xStep, y;
 
-    for(int i = 0; i < xRes; i++){
-        x += xStep;
-        y = b - yStep;
-        for(int j = 0; j < yRes; j++){
+
+    for(const auto& aaTp : aaSetting)
+    {
+        auto xOff = get<0>(aaTp);
+        auto yOff = get<1>(aaTp);
+        auto weight = get<2>(aaTp);
+        clearBuffer(tempBuffer);
+        double x = left - xStep + xOff*xStep, y;
+        for (int i = 0; i < xRes; i++)
+        {
+            x += xStep;
+            y = b - yStep + yOff*xStep;
+            for (int j = 0; j < yRes; j++)
+            {
 //            Make ray
-            y += yStep;
-            RayCast::Ray ray({0, 0, 0}, {x, y, n});
-            auto collRes = mesh.detectCollision(ray);
-            if(collRes){
-                auto bct = ray.triangleIntersect(collRes);
-                auto beta = bct[0], gamma = bct[1], alpha = 1 - beta - gamma, t = bct[2];
-                auto hitPoint = t * ray.getDir();
-                auto curNorm = alpha * (*collRes)[0].normal + beta *(*collRes)[1].normal + gamma * (*collRes)[2].normal;
-                curNorm.normalize();
-                auto l = (*collRes).getWs().dot({alpha, beta, gamma});
-                auto curU = ((*collRes)[0].uvw[0] * alpha + (*collRes)[1].uvw[0] * beta +(*collRes)[2].uvw[0] * gamma )/l;
-                auto curV = ((*collRes)[0].uvw[1] * alpha + (*collRes)[1].uvw[1] * beta +(*collRes)[2].uvw[1] * gamma )/l;
-                auto color = computeColor(mesh, *collRes, hitPoint, curNorm, curU, curV);
-                putPixel(pixelBuffer, j, i, {color, 0});
+                y += yStep;
+                RayCast::Ray ray({0, 0, 0}, {x, y, n});
+                auto collRes = mesh.detectCollision(ray);
+                if (collRes)
+                {
+                    auto bct = ray.triangleIntersect(collRes);
+                    auto beta = bct[0], gamma = bct[1], alpha = 1 - beta - gamma, t = bct[2];
+                    auto hitPoint = t * ray.getDir();
+                    auto curNorm =
+                            alpha * (*collRes)[0].normal + beta * (*collRes)[1].normal + gamma * (*collRes)[2].normal;
+                    curNorm.normalize();
+                    auto l = (*collRes).getWs().dot({alpha, beta, gamma});
+                    auto curU = ((*collRes)[0].uvw[0] * alpha + (*collRes)[1].uvw[0] * beta +
+                                 (*collRes)[2].uvw[0] * gamma) / l;
+                    auto curV = ((*collRes)[0].uvw[1] * alpha + (*collRes)[1].uvw[1] * beta +
+                                 (*collRes)[2].uvw[1] * gamma) / l;
+                    auto color = computeColor(mesh, *collRes, hitPoint, curNorm, curU, curV);
+                    putPixel(tempBuffer, j, i, {color, 0});
+                }
             }
+        }
+        for (int i = 0; i < xRes * yRes; i++)
+        {
+            tempBuffer[i].color.scale(weight);
+            pixelBuffer[i].color.translate(tempBuffer[i].color);
         }
     }
 }

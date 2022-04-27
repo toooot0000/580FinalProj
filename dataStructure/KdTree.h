@@ -68,7 +68,7 @@ private:
     };
 
     constexpr static const double PartitionResolution = 2;
-    constexpr static const int PartitionThreshold = 20;
+    constexpr static const int PartitionThreshold = 10;
 
 
     struct PartitionResult{

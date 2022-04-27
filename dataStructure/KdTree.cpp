@@ -19,7 +19,9 @@ KdTree::KdNode * KdTree::buildTree(std::list<const ObjectInterface *> &objs, con
      * 1. Find partition
      * 2. Record
      */
-
+    if(objs.size()<PartitionThreshold){
+        return nullptr;
+    }
     auto result = makePartition(objs, LBB, RTF);
     Vec3 lRTF{RTF}, lLBB{LBB}, rRTF{RTF}, rLBB{LBB};
     lRTF[result.axis] = result.val;
